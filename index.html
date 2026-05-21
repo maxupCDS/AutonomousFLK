@@ -135,7 +135,7 @@
         <div class="menu-item" onclick="switchPage('reportPage', '📋 자율주행 운행보고')">📋 자율주행 운행보고</div>
         <div class="menu-item" onclick="switchPage('chargePage', '⚡ 충전 관리')">⚡ 충전 관리</div>
     </div>
-    <div class="menu-footer"><div class="logout-btn" onclick="logout()"><span>로그아웃</span><span style="font-size:12px; color:#999; font-weight:normal;">Sign Out</span></div></div>
+    <div class="menu-footer"><div class="logout-btn" onclick="logout()"><span>로그아웃</span></div></div>
 </div>
 
 <div id="customModal"><div class="modal-card"><div class="modal-body"><div id="modalTitle" style="font-weight:bold; color:#1a73e8; margin-bottom:8px; font-size:18px;">알림</div><div id="modalText" style="font-size:15px; color:#555; white-space:pre-line;">내용</div></div><div class="modal-footer" id="modalFooter"></div></div></div>
@@ -620,9 +620,14 @@
         window.scrollTo(0,0);
     }
     function resetForm() {
-        const curPage = document.querySelector('.app-page.active').id;
-        if(curPage==='reportPage') { resetReportForm(); clearFormData('report'); }
-        else if(curPage==='chargePage') { resetChargeForm(); clearFormData('charge'); }
+        // 새로고침 컨펌 안내 팝업창 호출 및 초기화 기능 복구
+        var isConfirm = confirm("새로고침 시 현재 작성 중인 내용이 모두 초기화됩니다. 진행하시겠습니까?");
+        if (isConfirm) {
+            const curPage = document.querySelector('.app-page.active').id;
+            if(curPage==='reportPage') { resetReportForm(); clearFormData('report'); }
+            else if(curPage==='chargePage') { resetChargeForm(); clearFormData('charge'); }
+            alert("작성 창이 초기화되었습니다.");
+        }
     }
     function checkLogin() { const email = document.getElementById('emailInput').value.trim(); if(email.includes('@')) { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userEmail', email); showApp(); } }
     
