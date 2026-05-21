@@ -161,7 +161,7 @@
         <div class="section">
             <label>데이터 실시간 새로고침</label>
             <div style="display:flex; align-items:center; gap:8px;">
-                <div style="font-size:13px; color:#666; flex:1;">자율주행 운영 통계 탭의 최신 실증 현황을 실시간 파싱합니다.</div>
+                <div style="font-size:13px; color:#666; flex:1;">자율주행데이터 장표의 최신 운영 성과 데이터를 실시간으로 동기화합니다.</div>
                 <button onclick="fetchAutonomousData()" style="background:#1a73e8; border:none; border-radius:10px; width:48px; height:48px; font-size:20px; color:white; flex-shrink:0; cursor:pointer;">🔄</button>
             </div>
         </div>
@@ -276,7 +276,7 @@
         if (scrollTop === 0 && e.touches[0].clientY > touchStartY) { e.preventDefault(); }
     }, { passive: false });
 
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyxptgOaMBhHT-O8FDw-FTBGC0DuIkAceU02yPD534s233m9aVROfFENt8oF3PQ4LnS/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwjNVcBgSEw6T6zxmScm_IoKUCl3AZpQiWVsJvltVk4YLNiW90uABJLyst-d1Y-roNd/exec';
 
     const FORM_KEYS = {
         report: ['ssdVersion','autoDist','autoTime','totalOdo','workIssue','reportDate',
@@ -285,7 +285,7 @@
                  ...Array.from({length:5},(_,i)=>Array.from({length:4},(_,j)=>`h${i}_${j}`)).flat()],
         charge: ['chargeAmount','chargeTime','chargeMemo','chargeDate','selectedChargeCar'],
         check:  ['checkMemo','checkDate','selectedCheckCar',
-                 ...["내외관 파손/청결","타이어 상태/압력","등화장치 작동","브레이크 성능","엔진/소모품류","내부 장비 상태"].map(k=>'check_'+k)]
+                 ...["내외관 파破損/청결","타이어 상태/압력","등화장치 작동","브레이크 성능","엔진/소모품류","내부 장비 상태"].map(k=>'check_'+k)]
     };
 
     let selectedUser="", selectedEmail="", selectedType="", selectedCar="",
@@ -511,6 +511,7 @@
         }
     }
 
+    /* [수정 및 동기화 추가] "자율주행데이터 장표"의 데이터 매핑 및 연동 */
     function fetchAutonomousData() {
         const tbody = document.getElementById('autonomousTableBody');
         if(!tbody) return;
@@ -520,7 +521,7 @@
             .then(res => res.json())
             .then(data => {
                 if(!data || data.length === 0 || data.error) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="padding:30px; color:#e53e3e;">시트 데이터를 찾을 수 없습니다.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="padding:30px; color:#e53e3e;">시트 데이터를 찾을 수 없거나 데이터가 비어있습니다.</td></tr>`;
                     return;
                 }
                 
@@ -528,10 +529,11 @@
                 let sumRate = 0, sumIntervention = 0, validCount = 0;
 
                 data.forEach(item => {
-                    let car = item["차량번호"] || "미지정";
-                    let rate = parseFloat(item["자율주행 비율"] || item["자동모드 비율"] || 0);
-                    let intervention = parseInt(item["제어권 전환 건수"] || item["운전자 개입"] || 0);
-                    let distance = item["목표 대비 거리"] || item["거리 실적"] || "-";
+                    // 제공해주신 시트 장표의 헤더 명칭 매핑 처리 (차량번호 / 자율비율 혹은 자동모드 비율 등 유연한 탐색)
+                    let car = item["차량번호"] || item["차량"] || "미지정";
+                    let rate = parseFloat(item["자율주행 비율"] || item["자율비율"] || item["자동모드 비율"] || 0);
+                    let intervention = parseInt(item["제어권 전환 건수"] || item["제어권 전환"] || item["운전자 개입"] || 0);
+                    let distance = item["목표 대비 거리"] || item["거리 실적"] || item["누적거리"] || "-";
 
                     sumRate += rate;
                     sumIntervention += intervention;
@@ -554,7 +556,7 @@
             })
             .catch(err => {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="4" style="padding:30px; color:#e53e3e;">연동 도중 네트워크 오류가 발생했습니다.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="padding:30px; color:#e53e3e;">연동 도중 네트워크 오류가 발생했습니다. GAS 배포 여부를 확인해 주세요.</td></tr>`;
             });
     }
 
@@ -624,7 +626,6 @@
     }
     function checkLogin() { const email = document.getElementById('emailInput').value.trim(); if(email.includes('@')) { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userEmail', email); showApp(); } }
     
-    /* [수정 처리] 로그인 시 userList에서 이메일을 검색해 실명 매칭 고정 */
     function showApp() { 
         document.getElementById('loginOverlay').style.display='none'; 
         document.getElementById('mainApp').style.display='block'; 
@@ -632,13 +633,10 @@
         document.getElementById('displayUserEmail').innerText = email; 
         
         if(email) {
-            // 사내 계정 목록(userList)에서 입력한 이메일과 매칭되는 유저를 조회
             const matchedUser = userList.find(u => u.email.toLowerCase() === email.toLowerCase());
             if (matchedUser) {
-                // 매치되는 이름이 있으면 이름을 정상 표기 (예: 최대섭님)
                 document.getElementById('displayUserName').innerText = matchedUser.name + "님";
             } else {
-                // 예외상황(목록에 없는 이메일) 발생 시에만 ID 파싱 적용
                 const userId = email.split('@')[0];
                 document.getElementById('displayUserName').innerText = userId + "님";
             }
