@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1a73e8">
+    
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/maxupCDS/safetydriver/main/logo_app.png">
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/maxupCDS/safetydriver/main/logo_app.png">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <title>안전운행팀 보고서</title>
+    <style>
+        /* [1. 전역 스타일] */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f7fa; color: #333; overflow-x: hidden; width: 100%; }
+        
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+
+        /* [2. 로그인 화면] */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-card { background: white; padding: 40px 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; width: 90%; max-width: 350px; }
+        .team-title { color: #1a73e8; font-size: 1.4rem; font-weight: 900; margin-bottom: 25px; }
+        .login-input { width: 100%; padding: 14px; margin-bottom: 12px; border: 2px solid #edf2f7; border-radius: 12px; font-size: 16px; text-align: center; outline: none; }
+        .btn-login { width: 100%; padding: 15px; background: #1a73e8; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; }
+
+        /* [3. 메인 앱 레이아웃] */
+        #mainApp { display: none; width: 100%; max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; padding: 15px; position: relative; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        .header-area { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f1f3f5; padding-bottom: 10px; }
+        .header-title { color: #1a73e8; font-size: 1.1rem; font-weight: bold; }
+        .section { margin-bottom: 15px; padding: 15px; border: 1px solid #edf2f7; border-radius: 12px; background-color: #fdfdfe; width: 100%; }
+        label { display: block; margin-bottom: 12px; font-weight: bold; font-size: 16px; color: #333; }
+        
+        /* [4. 홈 대시보드] */
+        #homePage { padding: 30px 10px; text-align: center; }
+        .home-logo { width: 140px; margin-bottom: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .home-welcome { font-size: 1.2rem; font-weight: bold; margin-bottom: 30px; color: #444; }
+        .home-menu-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .home-card { background: white; border: 1px solid #eef2f8; border-radius: 18px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 15px; cursor: pointer; transition: 0.2s; }
+        .home-card:active { transform: scale(0.97); background: #f8faff; }
+        .home-card-icon { font-size: 28px; }
+        .home-card-text { font-size: 17px; font-weight: bold; color: #333; }
+
+        /* [5. 공통 폼 요소] */
+        .btn-grid { display: grid; gap: 8px; width: 100%; }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .select-btn { padding: 14px 2px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #4a5568; text-align: center; }
+        .select-btn.selected { background-color: #1a73e8 !important; color: white !important; border-color: #1a73e8 !important; }
+        .text-input { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 16px; outline: none; transition: background-color 0.2s, border-color 0.2s; }
+        .text-input.filled { background-color: #e8f4fd; border-color: #90caf9; }
+
+        /* [6. 차량 관리 체크 항목 스타일] */
+        .check-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #eee; }
+        .check-label { font-size: 14px; color: #444; font-weight: 500; }
+        .check-options { display: flex; gap: 5px; }
+        .opt-btn { padding: 8px 12px; border: 1px solid #e2e8f0; background: #fff; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: bold; color: #999; }
+        .opt-btn.good.selected { background: #28a745; color: white; border-color: #28a745; }
+        .opt-btn.bad.selected { background: #dc3545; color: white; border-color: #dc3545; }
+
+        /* [7. 버튼 스타일 통일] */
+        .circle-btn { border: none; background: #1a73e8; color: white; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+        .circle-btn:active { background: #0d47a1; }
+        
+        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f8fafc; }
+        .category-name { font-size: 14px; font-weight: 600; color: #4a5568; }
+        .counter-group { display: flex; align-items: center; gap: 10px; }
+        .counter-val { width: 35px; text-align: center; border: none; font-weight: bold; font-size: 16px; background: transparent; outline: none; }
+
+        .hard-table-wrapper { width: 100%; border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
+        .hard-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .hard-table th { font-size: 11px; background: #f8fafc; padding: 10px 2px; border: 1px solid #eee; }
+        .hard-table td { border: 1px solid #eee; text-align: center; padding: 8px 0; }
+        .hard-cause-label { font-size: 11.5px; font-weight: bold; color: #333; line-height: 1.2; word-break: keep-all; padding: 0 2px; }
+        .hard-cell-content { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .hard-val-input { width: 100%; text-align: center; border: none; font-weight: 800; font-size: 16px; color: #333; background: transparent; outline: none; }
+
+        .btn-add { width: 100%; padding: 18px; border: none; border-radius: 14px; font-size: 18px; font-weight: bold; color: white; background: #28a745; margin-top: 15px; }
+
+        /* 운행일정 표 스타일 */
+        .sched-header { display: flex; padding: 12px 5px; background: #f1f3f5; border-radius: 8px; margin-bottom: 10px; font-size: 13px; font-weight: bold; color: #495057; text-align: center; }
+        .sched-row { display: flex; align-items: center; padding: 15px 5px; margin-bottom: 5px; border-bottom: 1px solid #eee; background: #fff; text-align: center; }
+        .sched-col { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+        .sched-divider { border-left: 1px solid #dee2e6; border-right: 1px solid #dee2e6; }
+        .schedule-empty { text-align: center; padding: 50px; color: #bbb; border: 1px dashed #ddd; border-radius: 12px; margin-top: 10px; font-size: 14px; }
+
+        /* [추가 항목] 자율주행 데이터 대시보드 및 테이블 스타일 */
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .kpi-card { background: #fdfdfe; border: 1px solid #edf2f7; border-radius: 12px; padding: 14px; text-align: left; }
+        .kpi-title { font-size: 11px; color: #718096; margin-bottom: 4px; font-weight: bold; }
+        .kpi-num { font-size: 18px; font-weight: 800; color: #1a73e8; }
+        .autonomous-table-wrapper { width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; overflow-x: auto; background: white; margin-top: 5px; }
+        .autonomous-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; min-width: 400px; }
+        .autonomous-table th { background: #f7fafc; padding: 10px; font-weight: bold; color: #4a5568; border-bottom: 2px solid #e2e8f0; }
+        .autonomous-table td { padding: 12px 10px; border-bottom: 1px solid #edf2f7; color: #4a5568; }
+        .autonomous-table tr:last-child td { border-bottom: none; }
+        .data-badge { display: inline-block; padding: 3px 6px; border-radius: 4px; font-size: 11px; font-weight: bold; background: #e3f2fd; color: #0d47a1; }
+
+        /* 사이드 메뉴 */
+        #sideMenu { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: white; z-index: 25000; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        #sideMenu.active { left: 0; }
+        .menu-header { padding: 50px 20px 25px; background: #1a73e8; color: white; }
+        .menu-list { flex: 1; display: flex; flex-direction: column; }
+        .menu-item { padding: 18px 20px; border-bottom: 1px solid #f1f3f5; cursor: pointer; font-size: 15px; font-weight: 600; color: #444; }
+        .menu-footer { margin-top: auto; padding: 20px; border-top: 1px solid #eee; background: #fcfcfc; }
+        .logout-btn { color: #d32f2f; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 24000; display: none; }
+        .app-page { display: none; }
+        .app-page.active { display: block; }
+        #customModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 30000; padding: 20px; }
+        .modal-card { background: white; border-radius: 20px; width: 100%; max-width: 320px; overflow: hidden; }
+        .modal-body { padding: 25px 20px; text-align: center; border-bottom: 1px solid #eee; }
+        .modal-footer { display: flex; }
+        .modal-btn { flex: 1; padding: 15px; border: none; background: transparent; font-size: 16px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay"><div class="login-card"><div class="team-title">FUTURE LINK</div><input type="email" id="emailInput" class="login-input" placeholder="사내 이메일 입력"><div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:20px; color:#666; font-size:14px;"><input type="checkbox" id="keepLogin"><label for="keepLogin" style="margin:0; font-size:14px; font-weight:normal;">자동 로그인 유지</label></div><button class="btn-login" onclick="checkLogin()">시작하기</button></div></div>
+<div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
+<div id="sideMenu">
+    <div class="menu-header"><span id="displayUserName" style="font-size:1.2rem; font-weight:bold; display:block;">사용자님</span><span id="displayUserEmail" style="font-size:0.85rem; opacity:0.85;">email@future-link.ai</span></div>
+    <div class="menu-list">
+        <div class="menu-item" onclick="switchPage('homePage', '🏠 HOME')">🏠 홈으로 가기</div>
+        <div class="menu-item" onclick="switchPage('autonomousDataPage', '🤖 자율주행 데이터 장표')">🤖 자율주행 데이터 장표</div>
+        <div class="menu-item" onclick="switchPage('viewSchedulePage', '📅 운행 일정 확인')">📅 운행 일정 확인</div>
+        <div class="menu-item" onclick="switchPage('reportPage', '📋 자율주행 운행보고')">📋 자율주행 운행보고</div>
+        <div class="menu-item" onclick="switchPage('chargePage', '⚡ 충전 관리')">⚡ 충전 관리</div>
+    </div>
+    <div class="menu-footer"><div class="logout-btn" onclick="logout()"><span>로그아웃</span><span style="font-size:12px; color:#999; font-weight:normal;">Sign Out</span></div></div>
+</div>
+
+<div id="customModal"><div class="modal-card"><div class="modal-body"><div id="modalTitle" style="font-weight:bold; color:#1a73e8; margin-bottom:8px; font-size:18px;">알림</div><div id="modalText" style="font-size:15px; color:#555; white-space:pre-line;">내용</div></div><div class="modal-footer" id="modalFooter"></div></div></div>
+
+<div id="mainApp">
+    <div class="header-area">
+        <div style="display:flex; align-items:center;"><button onclick="toggleMenu()" style="font-size:26px; background:none; border:none; color:#1a73e8; cursor:pointer; padding-right:10px;">☰</button><div class="header-title" id="mainHeaderTitle">HOME</div></div>
+        <div id="headerActions" style="display: none;"><button onclick="resetForm()" style="background:none; border:none; font-size:22px; cursor:pointer;">🔄</button></div>
+    </div>
+
+    <div id="homePage" class="app-page active">
+        <img src="https://raw.githubusercontent.com/maxupCDS/safetydriver/main/logo_app.png" class="home-logo" alt="Logo">
+        <div class="home-welcome">안전운행팀 업무 시스템</div>
+        <div class="home-menu-grid">
+            <div class="home-card" onclick="switchPage('autonomousDataPage', '🤖 자율주행 데이터 장표')"><span class="home-card-icon">🤖</span><span class="home-card-text">자율주행 데이터 장표</span></div>
+            <div class="home-card" onclick="switchPage('viewSchedulePage', '📅 운행 일정 확인')"><span class="home-card-icon">📅</span><span class="home-card-text">운행 일정 확인</span></div>
+            <div class="home-card" onclick="switchPage('reportPage', '📋 자율주행 운행보고')"><span class="home-card-icon">📋</span><span class="home-card-text">자율주행 운행보고</span></div>
+            <div class="home-card" onclick="switchPage('chargePage', '⚡ 충전 관리')"><span class="home-card-icon">⚡</span><span class="home-card-text">충전 관리 기록</span></div>
+        </div>
+    </div>
+
+    <div id="autonomousDataPage" class="app-page">
+        <div class="section">
+            <label>데이터 실시간 새로고침</label>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <div style="font-size:13px; color:#666; flex:1;">자율주행데이터 장표 탭의 최신 실증 현황을 실시간 파싱합니다.</div>
+                <button onclick="fetchAutonomousData()" style="background:#1a73e8; border:none; border-radius:10px; width:48px; height:48px; font-size:20px; color:white; flex-shrink:0; cursor:pointer;">🔄</button>
+            </div>
+        </div>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">평균 자율주행 비율</div>
+                <div class="kpi-num" id="avgAutoRate">0.0%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">총 제어권 전환</div>
+                <div class="kpi-num" id="totalIntervention">0건</div>
+            </div>
+        </div>
+
+        <div class="section" style="padding: 10px;">
+            <label style="font-size:15px; margin-bottom:8px;">실증 차량별 실적 매트릭스</label>
+            <div class="autonomous-table-wrapper">
+                <table class="autonomous-table">
+                    <thead>
+                        <tr>
+                            <th>차량번호</th>
+                            <th>자율 비율</th>
+                            <th>제어권 전환</th>
+                            <th>거리 실적</th>
+                        </tr>
+                    </thead>
+                    <tbody id="autonomousTableBody">
+                        <tr><td colspan="4" style="padding:30px; color:#bbb;">데이터를 불러오는 중입니다...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="checkPage" class="app-page">
+        <div class="section"><label>1. 점검 날짜</label><input type="date" id="checkDate" class="text-input" onchange="saveInput(this, 'check')"></div>
+        <div class="section"><label>2. 점검 차량</label><div class="btn-grid grid-2" id="checkCarBtnGroup"><script>for(let i=801;i<=810;i++)document.write(`<button class="select-btn" data-val="gs${i}" onclick="selectCheckCar(this)">gs${i}</button>`);</script></div></div>
+        <div class="section"><label>3. 기본 점검 항목</label><div id="checkListContainer"></div></div>
+        <div class="section"><label>특이사항 메모</label><textarea id="checkMemo" class="text-input" style="height:100px; resize:none;" placeholder="정비가 필요한 내용을 입력하세요." oninput="saveInput(this, 'check')"></textarea></div>
+        <button class="btn-add" id="checkSubmitBtn" style="background:#1a73e8;" onclick="addCheckRecord()">점검 결과 저장하기</button>
+    </div>
+
+    <div id="reportPage" class="app-page">
+        <div class="section"><label>1. 운행 날짜</label><input type="date" id="reportDate" class="text-input" onchange="saveInput(this, 'report')"></div>
+        <div class="section"><label>2. 작성자 선택</label><div class="btn-grid grid-2" id="userBtnGroup"></div></div>
+        <div class="section">
+            <label>3. 업무 및 차량 선택</label>
+            <div class="btn-grid grid-3" style="margin-bottom:12px;" id="typeBtnGroup">
+                <button class="select-btn" data-val="운행" onclick="selectType(this)">운행</button>
+                <button class="select-btn" data-val="동승" onclick="selectType(this)">동승</button>
+                <button class="select-btn" data-val="내근" onclick="selectType(this)">내근</button>
+            </div>
+            <div class="btn-grid grid-2" id="carBtnGroup"><script>for(let i=801;i<=810;i++)document.write(`<button class="select-btn" data-val="gs${i}" onclick="selectCar(this)">gs${i}</button>`);</script></div>
+        </div>
+        <div class="section"><label>4. 근무방식</label><div class="btn-grid grid-2" id="shiftBtnGroup"><button class="select-btn" data-val="주간" onclick="selectShift(this)">주간</button><button class="select-btn" data-val="야간" onclick="selectShift(this)">야간</button></div></div>
+        
+        <div id="autoDriveSections">
+            <div class="section"><label>5. SSD 버전</label><input type="text" id="ssdVersion" class="text-input" oninput="saveInput(this, 'report')"></div>
+            <div class="section"><label>6. 자율거리(km)</label><input type="number" id="autoDist" class="text-input" step="any" oninput="saveInput(this, 'report')"></div>
+            <div class="section"><label>7. 자율시간(6자리)</label><input type="number" id="autoTime" class="text-input" oninput="saveInput(this, 'report')"></div>
+            <div class="section"><label>8. 누적 ODO(km)</label><input type="number" id="totalOdo" class="text-input" oninput="saveInput(this, 'report')"></div>
+            <div class="section"><label>9. 소프트 테이크오버</label><div id="softContainer"></div><div style="text-align:right; font-weight:bold; color:#1a73e8; margin-top:8px; font-size:15px;">소프트 합계: <span id="softTotalDisp">0</span></div></div>
+            <div class="section"><label>10. 하드 테이크오버</label><div class="hard-table-wrapper"><table class="hard-table"><thead><tr><th style="width:24%">구분</th><th>브레이크</th><th>핸들</th><th>엑셀</th><th>시스템</th></tr></thead><tbody id="hardBody"></tbody></table></div><div style="text-align:right; font-weight:bold; color:#1a73e8; margin-top:10px; font-size:15px;">하드 합계: <span id="hardTotalDisp">0</span></div></div>
+        </div>
+        
+        <div class="section"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><label style="margin:0;">11. 이슈 사항</label></div><textarea id="workIssue" class="text-input" style="height:100px; resize:none;" oninput="saveInput(this, 'report')"></textarea></div>
+        <button class="btn-add" id="submitBtn" onclick="addRecord()">보고서 기록하기</button>
+    </div>
+
+    <div id="viewSchedulePage" class="app-page">
+        <div class="section">
+            <label>날짜 선택</label>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="date" id="viewDate" class="text-input" onchange="renderSchedule()" style="flex:1;">
+                <button onclick="fetchSchedule()" style="background:#1a73e8; border:none; border-radius:10px; width:48px; height:48px; font-size:20px; color:white; flex-shrink:0; cursor:pointer;">🔄</button>
+            </div>
+        </div>
+        <div id="scheduleListContainer" style="padding:5px;"></div>
+    </div>
+
+    <div id="chargePage" class="app-page">
+        <div class="section"><label>1. 날짜</label><input type="date" id="chargeDate" class="text-input" onchange="saveInput(this, 'charge')"></div>
+        <div class="section"><label>2. 차량 선택</label><div class="btn-grid grid-2" id="chargeCarBtnGroup"><script>for(let i=801;i<=810;i++)document.write(`<button class="select-btn" data-val="gs${i}" onclick="selectChargeCar(this)">gs${i}</button>`);</script></div></div>
+        <div class="section"><label>3. 충전량(kWh)</label><input type="number" id="chargeAmount" class="text-input" placeholder="0.0" oninput="saveInput(this, 'charge')"></div>
+        <div class="section"><label>4. 충전시간</label><input type="number" id="chargeTime" class="text-input" placeholder="충전 소요 시간" oninput="saveInput(this, 'charge')"></div>
+        <div class="section"><label>기타 내용 작성</label><textarea id="chargeMemo" class="text-input" style="height:100px; resize:none;" oninput="saveInput(this, 'charge')"></textarea></div>
+        <button class="btn-add" id="chargeSubmitBtn" style="background:#1a73e8;" onclick="addChargeRecord()">충전량 기록하기</button>
+    </div>
+</div>
+
+<script>
+    // [안드로이드 뒤로가기 버튼 종료 확인]
+    let backPressedOnce = false;
+    history.pushState(null, null, location.href);
+    window.addEventListener('popstate', function() {
+        if (backPressedOnce) {
+            history.back();
+            return;
+        }
+        history.pushState(null, null, location.href);
+        backPressedOnce = true;
+        showModal("앱 종료", "앱을 종료하시겠습니까?\n뒤로가기를 한 번 더 누르시면 앱이 종료됩니다.", "cancel_only");
+        setTimeout(() => { backPressedOnce = false; }, 3000);
+    });
+
+    // [pull-to-refresh 방지]
+    let touchStartY = 0;
+    document.addEventListener('touchstart', function(e) { touchStartY = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchmove', function(e) {
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        if (scrollTop === 0 && e.touches[0].clientY > touchStartY) { e.preventDefault(); }
+    }, { passive: false });
+
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyxptgOaMBhHT-O8FDw-FTBGC0DuIkAceU02yPD534s233m9aVROfFENt8oF3PQ4LnS/exec';
+
+    const FORM_KEYS = {
+        report: ['ssdVersion','autoDist','autoTime','totalOdo','workIssue','reportDate',
+                 'selectedUser','selectedType','selectedCar','selectedShift',
+                 ...Array.from({length:10},(_,i)=>'s'+i),
+                 ...Array.from({length:5},(_,i)=>Array.from({length:4},(_,j)=>`h${i}_${j}`)).flat()],
+        charge: ['chargeAmount','chargeTime','chargeMemo','chargeDate','selectedChargeCar'],
+        check:  ['checkMemo','checkDate','selectedCheckCar',
+                 ...["내외관 파손/청결","타이어 상태/압력","등화장치 작동","브레이크 성능","엔진/소모품류","내부 장비 상태"].map(k=>'check_'+k)]
+    };
+
+    let selectedUser="", selectedEmail="", selectedType="", selectedCar="",
+        selectedShift="", selectedChargeCar="", selectedCheckCar="";
+
+    const userList=[{name:'황금철', email:'kchwang@future-link.ai'}, {name:'윤길홍', email:'khyoon@future-link.ai'}, {name:'예준우', email:'star7760@future-link.ai'}, {name:'길광림', email:'volfgangk@future-link.ai'}, {name:'전재훈', email:'level5@future-link.ai'}, {name:'오진혁', email:'dhwlstnwkd@future-link.ai'}, {name:'김준혁', email:'kirk@future-link.ai'}, {name:'박승규', email:'jeffstyle@future-link.ai'}, {name:'유승민', email:'max0825@future-link.ai'}, {name:'최대섭', email:'chleotjq1@future-link.ai'}, {name:'윤승현', email:'shyoon@future-link.ai'}, {name:'김선규', email:'skkim@future-link.ai'}, {name:'차두원', email:'dwcha@future-link.ai'}, {name:'박지혜', email:'jpark@future-link.ai'}];
+    const reportAuthors = userList.filter(user => !['윤승현', '김선규', '차두원', '박지혜'].includes(user.name));
+    
+    const checkItems = ["내외관 파손/청결", "타이어 상태/압력", "등화장치 작동", "브레이크 성능", "엔진/소모품류", "내부 장비 상태"];
+    let checkResults = {};
+
+    const softKeys=["운전자판단","시스템이상","교통약자보호","신호위반","신호등지시","교차로딜레마","도로상황","차선변경","급정지/서행","보호의무"];
+    const hardCauses=["시스템이상","신호위반","교차로딜레마","도로상황","운전자실수"];
+    const hardActions=["브레이크","핸들","엑셀","시스템"];
+    const actionMap={"브레이크":"B","핸들":"H","엑셀":"A","시스템":"S"};
+
+    window.onload = function(){
+        initUI();
+        loadSavedData();
+        fetchSchedule();
+        fetchAutonomousData(); // [추가 항목] 자율주행 데이터 초기 바인딩 로드
+    }
+
+    function saveAllState() {
+        ['ssdVersion','autoDist','autoTime','totalOdo','workIssue','reportDate'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) localStorage.setItem('report_' + id, el.value);
+        });
+        for(let i=0; i<softKeys.length; i++) {
+            const e = document.getElementById('s'+i);
+            if(e) localStorage.setItem('report_s'+i, e.value);
+        }
+        for(let i=0; i<hardCauses.length; i++) {
+            for(let j=0; j<hardActions.length; j++) {
+                const e = document.getElementById(`h${i}_${j}`);
+                if(e) localStorage.setItem(`report_h${i}_${j}`, e.value);
+            }
+        }
+        if(selectedUser)       localStorage.setItem('report_selectedUser', selectedUser);
+        if(selectedType)       localStorage.setItem('report_selectedType', selectedType);
+        if(selectedCar)        localStorage.setItem('report_selectedCar', selectedCar);
+        if(selectedShift)      localStorage.setItem('report_selectedShift', selectedShift);
+        if(selectedChargeCar)  localStorage.setItem('charge_selectedChargeCar', selectedChargeCar);
+        if(selectedCheckCar)   localStorage.setItem('check_selectedCheckCar', selectedCheckCar);
+
+        ['chargeAmount','chargeTime','chargeMemo','chargeDate'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) localStorage.setItem('charge_' + id, el.value);
+        });
+        ['checkMemo','checkDate'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) localStorage.setItem('check_' + id, el.value);
+        });
+        checkItems.forEach(item => {
+            if(checkResults[item]) localStorage.setItem('check_check_' + item, checkResults[item]);
+        });
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        if(document.visibilityState === 'hidden') saveAllState();
+    });
+    window.addEventListener('pagehide', saveAllState);
+
+    function initUI() {
+        const ug = document.getElementById('userBtnGroup');
+        if(ug) { 
+            ug.innerHTML = ""; 
+            reportAuthors.forEach(u=> ug.innerHTML += `<button class="select-btn" data-val="${u.name}" onclick="selectUser(this,'${u.name}','${u.email}')">${u.name}</button>`); 
+        }
+        
+        const cl = document.getElementById('checkListContainer');
+        if(cl) {
+            cl.innerHTML = "";
+            checkItems.forEach(item => {
+                checkResults[item] = "";
+                cl.innerHTML += `<div class="check-item"><span class="check-label">${item}</span><div class="check-options"><button class="opt-btn good" data-item="${item}" onclick="toggleCheck('${item}', '양호', this)">양호</button><button class="opt-btn bad" data-item="${item}" onclick="toggleCheck('${item}', '불량', this)">불량</button></div></div>`;
+            });
+        }
+
+        const sc=document.getElementById('softContainer');
+        if(sc) { sc.innerHTML = ""; softKeys.forEach((n,i)=>{ sc.innerHTML+=`<div class="category-item"><span class="category-name">${i+1}. ${n}</span><div class="counter-group"><button class="circle-btn" onclick="stepSoft(${i},-1)">-</button><input id="s${i}" class="counter-val" value="0" readonly><button class="circle-btn" onclick="stepSoft(${i},1)">+</button></div></div>`; }); }
+        
+        const hb=document.getElementById('hardBody');
+        if(hb) { hb.innerHTML = ""; hardCauses.forEach((c,i)=>{ let row=`<tr><td class="hard-cause-label">${c}</td>`; hardActions.forEach((a,j)=>{ row+=`<td><div class="hard-cell-content"><button class="circle-btn" onclick="stepHard('${i}_${j}',1)">+</button><input id="h${i}_${j}" class="hard-val-input" value="0" readonly></div></td>`; }); hb.innerHTML+=row+`</tr>`; }); }
+        
+        const today = new Date().toISOString().substring(0, 10);
+        ['reportDate', 'chargeDate', 'checkDate', 'viewDate'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = today; });
+        if(localStorage.getItem('isLoggedIn') === 'true') showApp();
+    }
+
+    function saveInput(el, formType) {
+        localStorage.setItem(formType + '_' + el.id, el.value);
+        updateFilledStyle(el);
+    }
+
+    function updateFilledStyle(el) {
+        if(['ssdVersion','autoDist','autoTime','totalOdo'].includes(el.id)) {
+            el.classList.toggle('filled', el.value.trim() !== '');
+        }
+    }
+
+    function loadSavedData() {
+        ['ssdVersion','autoDist','autoTime','totalOdo','workIssue','reportDate'].forEach(id => {
+            const val = localStorage.getItem('report_' + id);
+            if (val && document.getElementById(id)) document.getElementById(id).value = val;
+        });
+        for(let i=0; i<softKeys.length; i++) {
+            const val = localStorage.getItem('report_s'+i);
+            if(val) document.getElementById('s'+i).value = val;
+        }
+        for(let i=0; i<hardCauses.length; i++) {
+            for(let j=0; j<hardActions.length; j++) {
+                const val = localStorage.getItem(`report_h${i}_${j}`);
+                if(val) document.getElementById(`h${i}_${j}`).value = val;
+            }
+        }
+        updateTotals();
+        ['ssdVersion','autoDist','autoTime','totalOdo'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) updateFilledStyle(el);
+        });
+
+        ['chargeAmount','chargeTime','chargeMemo','chargeDate'].forEach(id => {
+            const val = localStorage.getItem('charge_' + id);
+            if (val && document.getElementById(id)) document.getElementById(id).value = val;
+        });
+
+        ['checkMemo','checkDate'].forEach(id => {
+            const val = localStorage.getItem('check_' + id);
+            if (val && document.getElementById(id)) document.getElementById(id).value = val;
+        });
+
+        restoreSelectedBtn('report_selectedUser', '#userBtnGroup .select-btn', (b) => {
+            const user = userList.find(u => u.name === b.dataset.val);
+            if(user) selectUser(b, user.name, user.email);
+        });
+        restoreSelectedBtn('report_selectedType', '#typeBtnGroup .select-btn', (b) => selectType(b, true));
+        restoreSelectedBtn('report_selectedCar', '#carBtnGroup .select-btn', (b) => selectCar(b));
+        restoreSelectedBtn('report_selectedShift', '#shiftBtnGroup .select-btn', (b) => selectShift(b));
+        restoreSelectedBtn('check_selectedCheckCar', '#checkCarBtnGroup .select-btn', (b) => selectCheckCar(b));
+        restoreSelectedBtn('charge_selectedChargeCar', '#chargeCarBtnGroup .select-btn', (b) => selectChargeCar(b));
+
+        checkItems.forEach(item => {
+            const val = localStorage.getItem('check_check_' + item);
+            if(val) {
+                const btn = document.querySelector(`.opt-btn[data-item="${item}"][onclick*="${val}"]`);
+                if(btn) toggleCheck(item, val, btn);
+            }
+        });
+    }
+
+    function restoreSelectedBtn(storageKey, selector, callback) {
+        const val = localStorage.getItem(storageKey);
+        if(val) {
+            const btn = Array.from(document.querySelectorAll(selector)).find(b => b.dataset.val === val || b.innerText === val);
+            if(btn) callback(btn);
+        }
+    }
+
+    function clearFormData(formType) {
+        Object.keys(localStorage).forEach(key => {
+            if(key.startsWith(formType + '_')) localStorage.removeItem(key);
+        });
+    }
+
+    function clearAllSessData() {
+        Object.keys(localStorage).forEach(key => {
+            if(key.startsWith('report_') || key.startsWith('charge_') || key.startsWith('check_')) {
+                localStorage.removeItem(key);
+            }
+        });
+    }
+
+    function resetReportForm() {
+        selectedUser = ""; selectedEmail = ""; selectedType = ""; selectedCar = ""; selectedShift = "";
+        document.querySelectorAll('#userBtnGroup .select-btn, #typeBtnGroup .select-btn, #carBtnGroup .select-btn, #shiftBtnGroup .select-btn').forEach(b => b.classList.remove('selected'));
+        const today = new Date().toISOString().substring(0, 10);
+        document.getElementById('reportDate').value = today;
+        ['ssdVersion','autoDist','autoTime','totalOdo','workIssue'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) { el.value = ""; el.classList.remove('filled'); }
+        });
+        for(let i=0; i<softKeys.length; i++) { const e=document.getElementById('s'+i); if(e) e.value=0; }
+        for(let i=0; i<hardCauses.length; i++) { for(let j=0; j<hardActions.length; j++) { const e=document.getElementById(`h${i}_${j}`); if(e) e.value=0; } }
+        updateTotals();
+        const carArea = document.getElementById('carBtnGroup');
+        const autoSec = document.getElementById('autoDriveSections');
+        carArea.style.opacity="1"; carArea.style.pointerEvents="auto";
+        autoSec.style.opacity="1"; autoSec.style.pointerEvents="auto";
+    }
+
+    function resetChargeForm() {
+        selectedChargeCar = "";
+        document.querySelectorAll('#chargeCarBtnGroup .select-btn').forEach(b => b.classList.remove('selected'));
+        const today = new Date().toISOString().substring(0, 10);
+        document.getElementById('chargeDate').value = today;
+        ['chargeAmount','chargeTime','chargeMemo'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = "";
+        });
+    }
+
+    function toggleCheck(item, status, btn) {
+        const parent = btn.parentElement;
+        if (checkResults[item] === status) { 
+            checkResults[item] = ""; btn.classList.remove('selected'); 
+            localStorage.removeItem('check_check_' + item);
+        } else { 
+            parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected')); 
+            btn.classList.add('selected'); checkResults[item] = status; 
+            localStorage.setItem('check_check_' + item, status);
+        }
+    }
+
+    function selectUser(b, n, e) {
+        const isSelected = b.classList.contains('selected');
+        document.querySelectorAll('#userBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
+        if (isSelected) { 
+            selectedUser = ""; selectedEmail = ""; localStorage.removeItem('report_selectedUser');
+        } else { 
+            b.classList.add('selected'); selectedUser = n; selectedEmail = e; 
+            localStorage.setItem('report_selectedUser', n);
+        }
+    }
+
+    /* [신규 기능 추가] 구글 시트에서 자율주행 데이터 불러오기 및 렌더링 스크립트 */
+    function fetchAutonomousData() {
+        const tbody = document.getElementById('autonomousTableBody');
+        tbody.innerHTML = `<tr><td colspan="4" style="padding:30px; color:#999;">최신 실증 통계를 갱신 중입니다...</td></tr>`;
+        
+        fetch(`${GAS_URL}?type=autonomous`)
+            .then(res => res.json())
+            .then(data => {
+                if(!data || data.length === 0 || data.error) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="padding:30px; color:#e53e3e;">시트 데이터를 찾을 수 없습니다.</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = "";
+                let sumRate = 0, sumIntervention = 0, validCount = 0;
+
+                data.forEach(item => {
+                    let car = item["차량번호"] || "미지정";
+                    let rate = parseFloat(item["자율주행 비율"] || item["자동모드 비율"] || 0);
+                    let intervention = parseInt(item["제어권 전환 건수"] || item["운전자 개입"] || 0);
+                    let distance = item["목표 대비 거리"] || item["거리 실적"] || "-";
+
+                    sumRate += rate;
+                    sumIntervention += intervention;
+                    validCount++;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight:bold; color:#1a73e8;">${car}</td>
+                            <td><span class="data-badge">${rate.toFixed(1)}%</span></td>
+                            <td style="font-weight:bold; color:#e53e3e;">${intervention}건</td>
+                            <td>${distance}</td>
+                        </tr>
+                    `;
+                });
+
+                if(validCount > 0) {
+                    document.getElementById('avgAutoRate').innerText = (sumRate / validCount).toFixed(1) + "%";
+                    document.getElementById('totalIntervention').innerText = sumIntervention + "건";
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="4" style="padding:30px; color:#e53e3e;">연동 도중 네트워크 오류가 발생했습니다.</td></tr>`;
+            });
+    }
+
+    // 기존 코드 안전 유지 (이하 생략되어 있던 구조체 바인딩 복원 보존)
+    function selectCar(b) {
+        const isSelected = b.classList.contains('selected');
+        document.querySelectorAll('#carBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
+        if (isSelected) { selectedCar = ""; localStorage.removeItem('report_selectedCar'); }
+        else { b.classList.add('selected'); selectedCar = b.dataset.val; localStorage.setItem('report_selectedCar', b.dataset.val); }
+    }
+    function selectShift(b) {
+        const isSelected = b.classList.contains('selected');
+        document.querySelectorAll('#shiftBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
+        if (isSelected) { selectedShift = ""; localStorage.removeItem('report_selectedShift'); }
+        else { b.classList.add('selected'); selectedShift = b.dataset.val; localStorage.setItem('report_selectedShift', b.dataset.val); }
+    }
+    function selectChargeCar(b) {
+        const isSelected = b.classList.contains('selected');
+        document.querySelectorAll('#chargeCarBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
+        if (isSelected) { selectedChargeCar = ""; localStorage.removeItem('charge_selectedChargeCar'); }
+        else { b.classList.add('selected'); selectedChargeCar = b.dataset.val; localStorage.setItem('charge_selectedChargeCar', b.dataset.val); }
+    }
+    function selectCheckCar(b) {
+        const isSelected = b.classList.contains('selected');
+        document.querySelectorAll('#checkCarBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
+        if (isSelected) { selectedCheckCar = ""; localStorage.removeItem('check_selectedCheckCar'); }
+        else { b.classList.add('selected'); selectedCheckCar = b.dataset.val; localStorage.setItem('check_selectedCheckCar', b.dataset.val); }
+    }
+    function selectType(b, isRestore=false) {
+        const isSelected = b.classList.contains('selected');
+        if(!isRestore) { document.querySelectorAll('#typeBtnGroup .select-btn').forEach(x => x.classList.remove('selected')); }
+        if (isSelected && !isRestore) { selectedType = ""; localStorage.removeItem('report_selectedType'); }
+        else { b.classList.add('selected'); selectedType = b.dataset.val; localStorage.setItem('report_selectedType', b.dataset.val); }
+        
+        const carArea = document.getElementById('carBtnGroup');
+        const autoSec = document.getElementById('autoDriveSections');
+        if(selectedType === "내근") {
+            selectedCar = ""; document.querySelectorAll('#carBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
+            carArea.style.opacity = "0.3"; carArea.style.pointerEvents = "none";
+            autoSec.style.opacity = "0.3"; autoSec.style.pointerEvents = "none";
+        } else {
+            carArea.style.opacity = "1"; carArea.style.pointerEvents = "auto";
+            autoSec.style.opacity = "1"; autoSec.style.pointerEvents = "auto";
+        }
+    }
+    function stepSoft(idx, v) { const e = document.getElementById('s'+idx); let cur = parseInt(e.value)||0; cur += v; if(cur<0)cur=0; e.value=cur; updateTotals(); }
+    function stepHard(idStr, v) { const e = document.getElementById('h'+idStr); let cur = parseInt(e.value)||0; cur += v; if(cur<0)cur=0; e.value=cur; updateTotals(); }
+    function updateTotals() {
+        let soft = 0; for(let i=0; i<softKeys.length; i++) { soft += parseInt(document.getElementById('s'+i).value)||0; }
+        document.getElementById('softTotalDisp').innerText = soft;
+        let hard = 0; for(let i=0; i<hardCauses.length; i++) { for(let j=0; j<hardActions.length; j++) { hard += parseInt(document.getElementById(`h${i}_${j}`).value)||0; } }
+        document.getElementById('hardTotalDisp').innerText = hard;
+    }
+    function toggleMenu() { const m = document.getElementById('sideMenu'); const o = document.getElementById('menuOverlay'); const isActive = m.classList.contains('active'); m.classList.toggle('active'); o.style.display = isActive ? 'none' : 'block'; }
+    function switchPage(pid, title) {
+        document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pid).classList.add('active');
+        document.getElementById('mainHeaderTitle').innerText = title;
+        document.getElementById('headerActions').style.display = (pid==='reportPage'||pid==='chargePage'||pid==='checkPage') ? 'block' : 'none';
+        if(document.getElementById('sideMenu').classList.contains('active')) toggleMenu();
+        if(pid === 'autonomousDataPage') fetchAutonomousData(); // 페이지 전환 시 데이터 강제 동기화
+        window.scrollTo(0,0);
+    }
+    function resetForm() {
+        const curPage = document.querySelector('.app-page.active').id;
+        if(curPage==='reportPage') { resetReportForm(); clearFormData('report'); }
+        else if(curPage==='chargePage') { resetChargeForm(); clearFormData('charge'); }
+    }
+    function checkLogin() { const email = document.getElementById('emailInput').value.trim(); if(email.includes('@')) { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userEmail', email); showApp(); } }
+    function showApp() { document.getElementById('loginOverlay').style.display='none'; document.getElementById('mainApp').style.display='block'; document.getElementById('displayUserEmail').innerText = localStorage.getItem('userEmail')||''; }
+    function logout() { localStorage.clear(); clearAllSessData(); location.reload(); }
+    function showModal(title, text, type) {
+        document.getElementById('modalTitle').innerText = title; document.getElementById('modalText').innerText = text;
+        const footer = document.getElementById('modalFooter'); footer.innerHTML = "";
+        if(type==='cancel_only') { footer.innerHTML = `<button class="modal-btn" style="color:#666;" onclick="closeModal()">확인</button>`; }
+        document.getElementById('customModal').style.display = 'flex';
+    }
+    function closeModal() { document.getElementById('customModal').style.display = 'none'; }
+    
+    // 운행 일정 동적 바인딩 파트
+    function fetchSchedule() {
+        fetch(`${GAS_URL}?type=schedule`).then(res => res.json()).then(data => { window.globalSchedules = data; renderSchedule(); });
+    }
+    function renderSchedule() {
+        const selectedDate = document.getElementById('viewDate').value;
+        const container = document.getElementById('scheduleListContainer'); container.innerHTML = "";
+        if(!window.globalSchedules || window.globalSchedules.length === 0) { container.innerHTML = `<div class="schedule-empty">조회된 운행 일정 데이터가 없습니다.</div>`; return; }
+        const filtered = window.globalSchedules.filter(item => { let sDate = String(item["날짜"]||"").trim().replace(/\. /g, '-').replace(/\./g, '-'); return sDate.includes(selectedDate); });
+        if (filtered.length === 0) { container.innerHTML = `<div class="schedule-empty">선택하신 날짜에 배정된 일정이 없습니다.</div>`; return; }
+        container.innerHTML = `<div class="sched-header"><div style="flex:1;">차량번호</div><div style="flex:1;" class="sched-divider">드라이버</div><div style="flex:1;">미션</div></div>`;
+        filtered.forEach(item => { container.innerHTML += `<div class="sched-row"><div class="sched-col" style="font-weight:bold; color:#1a73e8;">${item["차량번호"]||"-"}</div><div class="sched-col sched-divider" style="font-weight:600;">${item["드라이버"]||"-"}</div><div class="sched-col" style="font-size:13px; color:#555;">${item["미션"]||"-"}</div></div>`; });
+    }
+</script>
+</body>
+</html>
