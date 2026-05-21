@@ -95,7 +95,7 @@
         .sched-divider { border-left: 1px solid #dee2e6; border-right: 1px solid #dee2e6; }
         .schedule-empty { text-align: center; padding: 50px; color: #bbb; border: 1px dashed #ddd; border-radius: 12px; margin-top: 10px; font-size: 14px; }
 
-        /* [수정] 관제시스템용 지도 컨테이너 스타일 */
+        /* 관제시스템용 지도 컨테이너 스타일 */
         #mapContainer { width: 100%; height: 450px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); z-index: 1; }
         .map-status-box { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: #666; }
 
@@ -259,6 +259,14 @@
     // 관제시스템용 전역 지도 객체 및 마커 레이어 
     let map = null;
     let markerGroup = null;
+
+    // [수정] 자동차 모양 커스텀 아이콘 객체 정의 (Data URI SVG 형태로 별도 파일 링크 없이 작동 안정성 확보)
+    const carIcon = L.icon({
+        iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='32' height='32'><path fill='%231a73e8' d='M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.24-3.72c.1-.31.39-.53.72-.53h10.07c.33 0 .62.22.72.53L19 11H5z'/></svg>",
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -14]
+    });
 
     const userList=[{name:'황금철', email:'kchwang@future-link.ai'}, {name:'윤길홍', email:'khyoon@future-link.ai'}, {name:'예준우', email:'star7760@future-link.ai'}, {name:'길광림', email:'volfgangk@future-link.ai'}, {name:'전재훈', email:'level5@future-link.ai'}, {name:'오진혁', email:'dhwlstnwkd@future-link.ai'}, {name:'김준혁', email:'kirk@future-link.ai'}, {name:'박승규', email:'jeffstyle@future-link.ai'}, {name:'유승민', email:'max0825@future-link.ai'}, {name:'최대섭', email:'chleotjq1@future-link.ai'}, {name:'윤승현', email:'shyoon@future-link.ai'}, {name:'김선규', email:'skkim@future-link.ai'}, {name:'차두원', email:'dwcha@future-link.ai'}, {name:'박지혜', email:'jpark@future-link.ai'}];
     const reportAuthors = userList.filter(user => !['윤승현', '김선규', '차두원', '박지혜'].includes(user.name));
@@ -478,15 +486,12 @@
         }
     }
 
-    /* [신규 구현] 무인 차량 관제 시스템 지도 렌더링 및 모의 GPS 트래킹 매핑 */
     function initControlMap() {
-        // 지도가 이미 생성되어 있는 경우 크기 재연산 레이아웃 최적화만 유도
         if (map) {
             setTimeout(() => { map.invalidateSize(); }, 200);
             return;
         }
 
-        // 서울 시청 일대 중심축 설정 기준 초기 로드 (실증단지 타겟에 맞춰 좌표 커스텀 변경 가능)
         map = L.map('mapContainer').setView([37.5665, 126.9780], 14);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -497,11 +502,11 @@
         refreshVehiclePositions();
     }
 
+    /* [수정] 마커 생성 부분에 carIcon 커스텀 아이콘 속성 추가 적용 */
     function refreshVehiclePositions() {
         if(!markerGroup) return;
         markerGroup.clearLayers();
 
-        // 서울 시청 반경 기준 gs801 ~ gs810 10대의 테스트 가상 노드 난수 생성기
         const centerLat = 37.5665;
         const centerLng = 126.9780;
 
@@ -511,8 +516,8 @@
             const vLat = centerLat + offsetLat;
             const vLng = centerLng + offsetLng;
 
-            // 기본 원형 핀 마커 바인딩 구성
-            const marker = L.marker([vLat, vLng]);
+            // icon 속성에 정의한 carIcon 지정
+            const marker = L.marker([vLat, vLng], { icon: carIcon });
             marker.bindPopup(`
                 <div style="font-family:sans-serif; font-size:13px; line-height:1.4;">
                     <strong style="color:#1a73e8; font-size:14px;">차량번호: gs${i}</strong><br>
@@ -522,9 +527,7 @@
             `);
             markerGroup.addLayer(marker);
         }
-        
-        // 데이터 리프레시 모바일 스낵바 피드백 대응 효과 대체
-        console.log("Vehicle GPS Node Updated.");
+        console.log("Vehicle GPS Node Updated with Car Icons.");
     }
 
     function selectCar(b) {
@@ -585,7 +588,6 @@
         document.getElementById('headerActions').style.display = (pid==='reportPage'||pid==='chargePage'||pid==='checkPage') ? 'block' : 'none';
         if(document.getElementById('sideMenu').classList.contains('active')) toggleMenu();
         
-        // 관제 레이아웃 진입 시점에 맵 그리기 트리거 작동
         if(pid === 'controlSystemPage') {
             initControlMap();
         }
@@ -626,7 +628,7 @@
         if(type==='cancel_only') { footer.innerHTML = `<button class="modal-btn" style="color:#666;" onclick="closeModal()">확인</button>`; }
         document.getElementById('customModal').style.display = 'flex';
     }
-    function closeModal() { document.getElementById('customModal').style.display = 'none'; }
+    function closeModal() { document.getElementById('customModal').style.none; }
     
     function fetchSchedule() {
         fetch(`${GAS_URL}?type=schedule`).then(res => res.json()).then(data => { window.globalSchedules = data; renderSchedule(); });
