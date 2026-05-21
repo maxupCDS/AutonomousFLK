@@ -14,18 +14,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     
-    <title>안전운행팀 보고서</title>
+    <title>안전운행팀 관제 시스템</title>
     
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=76e96484f19ecd3d0ed30fdb13a3d244"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <style>
         /* [1. 전역 스타일] */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f7fa; color: #333; overflow-x: hidden; width: 100%; }
-        
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type="number"] { -moz-appearance: textfield; }
 
         /* [2. 로그인 화면] */
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
@@ -51,55 +48,9 @@
         .home-card-icon { font-size: 28px; }
         .home-card-text { font-size: 17px; font-weight: bold; color: #333; }
 
-        /* [5. 공통 폼 요소] */
-        .btn-grid { display: grid; gap: 8px; width: 100%; }
-        .grid-3 { grid-template-columns: repeat(3, 1fr); }
-        .grid-2 { grid-template-columns: repeat(2, 1fr); }
-        .select-btn { padding: 14px 2px; border: 1px solid #e2e8f0; background: #fff; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #4a5568; text-align: center; }
-        .select-btn.selected { background-color: #1a73e8 !important; color: white !important; border-color: #1a73e8 !important; }
-        .text-input { width: 100%; padding: 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 16px; outline: none; transition: background-color 0.2s, border-color 0.2s; }
-        .text-input.filled { background-color: #e8f4fd; border-color: #90caf9; }
-
-        /* [6. 차량 관리 체크 항목 스타일] */
-        .check-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px dashed #eee; }
-        .check-label { font-size: 14px; color: #444; font-weight: 500; }
-        .check-options { display: flex; gap: 5px; }
-        .opt-btn { padding: 8px 12px; border: 1px solid #e2e8f0; background: #fff; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: bold; color: #999; }
-        .opt-btn.good.selected { background: #28a745; color: white; border-color: #28a745; }
-        .opt-btn.bad.selected { background: #dc3545; color: white; border-color: #dc3545; }
-
-        /* [7. 버튼 스타일 통일] */
-        .circle-btn { border: none; background: #1a73e8; color: white; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-        .circle-btn:active { background: #0d47a1; }
-        
-        .category-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f8fafc; }
-        .category-name { font-size: 14px; font-weight: 600; color: #4a5568; }
-        .counter-group { display: flex; align-items: center; gap: 10px; }
-        .counter-val { width: 35px; text-align: center; border: none; font-weight: bold; font-size: 16px; background: transparent; outline: none; }
-
-        .hard-table-wrapper { width: 100%; border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
-        .hard-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .hard-table th { font-size: 11px; background: #f8fafc; padding: 10px 2px; border: 1px solid #eee; }
-        .hard-table td { border: 1px solid #eee; text-align: center; padding: 8px 0; }
-        .hard-cause-label { font-size: 11.5px; font-weight: bold; color: #333; line-height: 1.2; word-break: keep-all; padding: 0 2px; }
-        .hard-cell-content { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .hard-val-input { width: 100%; text-align: center; border: none; font-weight: 800; font-size: 16px; color: #333; background: transparent; outline: none; }
-
-        .btn-add { width: 100%; padding: 18px; border: none; border-radius: 14px; font-size: 18px; font-weight: bold; color: white; background: #28a745; margin-top: 15px; }
-
-        /* 운행일정 표 스타일 */
-        .sched-header { display: flex; padding: 12px 5px; background: #f1f3f5; border-radius: 8px; margin-bottom: 10px; font-size: 13px; font-weight: bold; color: #495057; text-align: center; }
-        .sched-row { display: flex; align-items: center; padding: 15px 5px; margin-bottom: 5px; border-bottom: 1px solid #eee; background: #fff; text-align: center; }
-        .sched-col { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-        .sched-divider { border-left: 1px solid #dee2e6; border-right: 1px solid #dee2e6; }
-        .schedule-empty { text-align: center; padding: 50px; color: #bbb; border: 1px dashed #ddd; border-radius: 12px; margin-top: 10px; font-size: 14px; }
-
         /* 관제시스템용 지도 컨테이너 스타일 */
         #mapContainer { width: 100%; height: 450px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); z-index: 1; }
         .map-status-box { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: #666; }
-
-        /* [수정] 카카오 인포윈도우가 깔끔하게 렌더링되도록 스타일 추가 */
-        .kako-popup-content { padding: 10px; font-family: sans-serif; font-size: 13px; line-height: 1.4; width: 150px; }
 
         /* 사이드 메뉴 */
         #sideMenu { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: white; z-index: 25000; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
@@ -129,9 +80,6 @@
     <div class="menu-list">
         <div class="menu-item" onclick="switchPage('homePage', '🏠 HOME')">🏠 홈으로 가기</div>
         <div class="menu-item" onclick="switchPage('controlSystemPage', '🛰️ 무인 차량 관제 시스템')">🛰️ 무인 차량 관제 시스템</div>
-        <div class="menu-item" onclick="switchPage('viewSchedulePage', '📅 운행 일정 확인')">📅 운행 일정 확인</div>
-        <div class="menu-item" onclick="switchPage('reportPage', '📋 자율주행 운행보고')">📋 자율주행 운행보고</div>
-        <div class="menu-item" onclick="switchPage('chargePage', '⚡ 충전 관리')">⚡ 충전 관리</div>
     </div>
     <div class="menu-footer"><div class="logout-btn" onclick="logout()"><span>로그아웃</span></div></div>
 </div>
@@ -141,7 +89,6 @@
 <div id="mainApp">
     <div class="header-area">
         <div style="display:flex; align-items:center;"><button onclick="toggleMenu()" style="font-size:26px; background:none; border:none; color:#1a73e8; cursor:pointer; padding-right:10px;">☰</button><div class="header-title" id="mainHeaderTitle">HOME</div></div>
-        <div id="headerActions" style="display: none;"><button onclick="resetForm()" style="background:none; border:none; font-size:22px; cursor:pointer;">🔄</button></div>
     </div>
 
     <div id="homePage" class="app-page active">
@@ -149,9 +96,6 @@
         <div class="home-welcome">안전운행팀 업무 시스템</div>
         <div class="home-menu-grid">
             <div class="home-card" onclick="switchPage('controlSystemPage', '🛰️ 무인 차량 관제 시스템')"><span class="home-card-icon">🛰️</span><span class="home-card-text">무인 차량 관제 시스템</span></div>
-            <div class="home-card" onclick="switchPage('viewSchedulePage', '📅 운행 일정 확인')"><span class="home-card-icon">📅</span><span class="home-card-text">운행 일정 확인</span></div>
-            <div class="home-card" onclick="switchPage('reportPage', '📋 자율주행 운행보고')"><span class="home-card-icon">📋</span><span class="home-card-text">자율주행 운행보고</span></div>
-            <div class="home-card" onclick="switchPage('chargePage', '⚡ 충전 관리')"><span class="home-card-icon">⚡</span><span class="home-card-text">충전 관리 기록</span></div>
         </div>
     </div>
 
@@ -164,61 +108,6 @@
             </div>
             <div id="mapContainer"></div>
         </div>
-    </div>
-
-    <div id="checkPage" class="app-page">
-        <div class="section"><label>1. 점검 날짜</label><input type="date" id="checkDate" class="text-input" onchange="saveInput(this, 'check')"></div>
-        <div class="section"><label>2. 점검 차량</label><div class="btn-grid grid-2" id="checkCarBtnGroup"><script>for(let i=801;i<=810;i++)document.write(`<button class="select-btn" data-val="gs${i}" onclick="selectCheckCar(this)">gs${i}</button>`);</script></div></div>
-        <div class="section"><label>3. 기본 점검 항목</label><div id="checkListContainer"></div></div>
-        <div class="section"><label>특이사항 메모</label><textarea id="checkMemo" class="text-input" style="height:100px; resize:none;" placeholder="정비가 필요한 내용을 입력하세요." oninput="saveInput(this, 'check')"></textarea></div>
-        <button class="btn-add" id="checkSubmitBtn" style="background:#1a73e8;" onclick="addCheckRecord()">점검 결과 저장하기</button>
-    </div>
-
-    <div id="reportPage" class="app-page">
-        <div class="section"><label>1. 운행 날짜</label><input type="date" id="reportDate" class="text-input" onchange="saveInput(this, 'report')"></div>
-        <div class="section"><label>2. 작성자 선택</label><div class="btn-grid grid-2" id="userBtnGroup"></div></div>
-        <div class="section">
-            <label>3. 업무 및 차량 선택</label>
-            <div class="btn-grid grid-3" style="margin-bottom:12px;" id="typeBtnGroup">
-                <button class="select-btn" data-val="운행" onclick="selectType(this)">운행</button>
-                <button class="select-btn" data-val="동승" onclick="selectType(this)">동승</button>
-                <button class="select-btn" data-val="내근" onclick="selectType(this)">내근</button>
-            </div>
-            <div class="btn-grid grid-2" id="carBtnGroup"><script>for(let i=801;i<=810;i++)document.write(`<button class="select-btn" data-val="gs${i}" onclick="selectCar(this)">gs${i}</button>`);</script></div>
-        </div>
-        <div class="section"><label>4. 근무방식</label><div class="btn-grid grid-2" id="shiftBtnGroup"><button class="select-btn" data-val="주간" onclick="selectShift(this)">주간</button><button class="select-btn" data-val="야간" onclick="selectShift(this)">야간</button></div></div>
-        
-        <div id="autoDriveSections">
-            <div class="section"><label>5. SSD 버전</label><input type="text" id="ssdVersion" class="text-input" oninput="saveInput(this, 'report')"></div>
-            <div class="section"><label>6. 자율거리(km)</label><input type="number" id="autoDist" class="text-input" step="any" oninput="saveInput(this, 'report')"></div>
-            <div class="section"><label>7. 자율시간(6자리)</label><input type="number" id="autoTime" class="text-input" oninput="saveInput(this, 'report')"></div>
-            <div class="section"><label>8. 누적 ODO(km)</label><input type="number" id="totalOdo" class="text-input" oninput="saveInput(this, 'report')"></div>
-            <div class="section"><label>9. 소프트 테이크오버</label><div id="softContainer"></div><div style="text-align:right; font-weight:bold; color:#1a73e8; margin-top:8px; font-size:15px;">소프트 합계: <span id="softTotalDisp">0</span></div></div>
-            <div class="section"><label>10. 하드 테이크오버</label><div class="hard-table-wrapper"><table class="hard-table"><thead><tr><th style="width:24%">구분</th><th>브레이크</th><th>핸들</th><th>엑셀</th><th>시스템</th></tr></thead><tbody id="hardBody"></tbody></table></div><div style="text-align:right; font-weight:bold; color:#1a73e8; margin-top:10px; font-size:15px;">하드 합계: <span id="hardTotalDisp">0</span></div></div>
-        </div>
-        
-        <div class="section"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><label style="margin:0;">11. 이슈 사항</label></div><textarea id="workIssue" class="text-input" style="height:100px; resize:none;" oninput="saveInput(this, 'report')"></textarea></div>
-        <button class="btn-add" id="submitBtn" onclick="addRecord()">보고서 기록하기</button>
-    </div>
-
-    <div id="viewSchedulePage" class="app-page">
-        <div class="section">
-            <label>날짜 선택</label>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <input type="date" id="viewDate" class="text-input" onchange="renderSchedule()" style="flex:1;">
-                <button onclick="fetchSchedule()" style="background:#1a73e8; border:none; border-radius:10px; width:48px; height:48px; font-size:20px; color:white; flex-shrink:0; cursor:pointer;">🔄</button>
-            </div>
-        </div>
-        <div id="scheduleListContainer" style="padding:5px;"></div>
-    </div>
-
-    <div id="chargePage" class="app-page">
-        <div class="section"><label>1. 날짜</label><input type="date" id="chargeDate" class="text-input" onchange="saveInput(this, 'charge')"></div>
-        <div class="section"><label>2. 차량 선택</label><div class="btn-grid grid-2" id="chargeCarBtnGroup"><script>for(let i=801;i<=810;i++)document.write(`<button class="select-btn" data-val="gs${i}" onclick="selectChargeCar(this)">gs${i}</button>`);</script></div></div>
-        <div class="section"><label>3. 충전량(kWh)</label><input type="number" id="chargeAmount" class="text-input" placeholder="0.0" oninput="saveInput(this, 'charge')"></div>
-        <div class="section"><label>4. 충전시간</label><input type="number" id="chargeTime" class="text-input" placeholder="충전 소요 시간" oninput="saveInput(this, 'charge')"></div>
-        <div class="section"><label>기타 내용 작성</label><textarea id="chargeMemo" class="text-input" style="height:100px; resize:none;" oninput="saveInput(this, 'charge')"></textarea></div>
-        <button class="btn-add" id="chargeSubmitBtn" style="background:#1a73e8;" onclick="addChargeRecord()">충전량 기록하기</button>
     </div>
 </div>
 
@@ -243,387 +132,60 @@
         if (scrollTop === 0 && e.touches[0].clientY > touchStartY) { e.preventDefault(); }
     }, { passive: false });
 
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyTfiIB27S7qb4mog431VnDdPVTN1fXHd0oe3IM4VOWmtPvHPUCLseZtXOiNRr8yl9l/exec';
-
-    const FORM_KEYS = {
-        report: ['ssdVersion','autoDist','autoTime','totalOdo','workIssue','reportDate',
-                 'selectedUser','selectedType','selectedCar','selectedShift',
-                 ...Array.from({length:10},(_,i)=>'s'+i),
-                 ...Array.from({length:5},(_,i)=>Array.from({length:4},(_,j)=>`h${i}_${j}`)).flat()],
-        charge: ['chargeAmount','chargeTime','chargeMemo','chargeDate','selectedChargeCar'],
-        check:  ['checkMemo','checkDate','selectedCheckCar',
-                 ...["내외관 파破損/청결","타이어 상태/압력","등화장치 작동","브레이크 성능","엔진/소모품류","내부 장비 상태"].map(k=>'check_'+k)]
-    };
-
-    let selectedUser="", selectedEmail="", selectedType="", selectedCar="",
-        selectedShift="", selectedChargeCar="", selectedCheckCar="";
-
-    // [수정] 카카오맵용 전역 관리 객체 및 마커 배열 관리
     let map = null;
     let markersArray = [];
-    let activeInfoWindow = null; // 현재 열려있는 팝업 관리용
-
-    // [수정] 카카오맵 전용 커스텀 마커 이미지 설정 (기존 핀 디자인 유지)
-    const markerImageUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' width='40' height='40'><path fill='%231a73e8' d='M20 2C11.16 2 4 9.16 4 18c0 11.05 16 20 16 20s16-8.95 16-20c0-8.84-7.16-16-16-16zm0 22c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z'/><path fill='%23ffffff' d='M20 12c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm4.5 7.5h-9v-1.2l.9-.9h7.2l.9.9v1.2zm-.6-2.7h-7.8l.6-.9c.2-.3.5-.4.8-.4h5c.3 0 .6.1.8.4l.6.9z'/></svg>";
-    const markerImageSize = new kakao.maps.Size(40, 40);
-    const markerImageOption = { offset: new kakao.maps.Point(20, 40) }; // 핀 끝이 좌표를 가리키도록 오프셋 조절
 
     const userList=[{name:'황금철', email:'kchwang@future-link.ai'}, {name:'윤길홍', email:'khyoon@future-link.ai'}, {name:'예준우', email:'star7760@future-link.ai'}, {name:'길광림', email:'volfgangk@future-link.ai'}, {name:'전재훈', email:'level5@future-link.ai'}, {name:'오진혁', email:'dhwlstnwkd@future-link.ai'}, {name:'김준혁', email:'kirk@future-link.ai'}, {name:'박승규', email:'jeffstyle@future-link.ai'}, {name:'유승민', email:'max0825@future-link.ai'}, {name:'최대섭', email:'chleotjq1@future-link.ai'}, {name:'윤승현', email:'shyoon@future-link.ai'}, {name:'김선규', email:'skkim@future-link.ai'}, {name:'차두원', email:'dwcha@future-link.ai'}, {name:'박지혜', email:'jpark@future-link.ai'}];
-    const reportAuthors = userList.filter(user => !['윤승현', '김선규', '차두원', '박지혜'].includes(user.name));
-    
-    const checkItems = ["내외관 파손/청결", "타이어 상태/압력", "등화장치 작동", "브레이크 성능", "엔진/소모품류", "내부 장비 상태"];
-    let checkResults = {};
-
-    const softKeys=["운전자판단","시스템이상","교통약자보호","신호위반","신호등지시","교차로딜레마","도로상황","차선변경","급정지/서행","보호의무"];
-    const hardCauses=["시스템이상","신호위반","교차로딜레마","도로상황","운전자실수"];
-    const hardActions=["브레이크","핸들","엑셀","시스템"];
 
     window.onload = function(){
         initUI();
-        loadSavedData();
-        fetchSchedule();
     }
-
-    function saveAllState() {
-        ['ssdVersion','autoDist','autoTime','totalOdo','workIssue','reportDate'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) localStorage.setItem('report_' + id, el.value);
-        });
-        for(let i=0; i<softKeys.length; i++) {
-            const e = document.getElementById('s'+i);
-            if(e) localStorage.setItem('report_s'+i, e.value);
-        }
-        for(let i=0; i<hardCauses.length; i++) {
-            for(let j=0; j<hardActions.length; j++) {
-                const e = document.getElementById(`h${i}_${j}`);
-                if(e) localStorage.setItem(`report_h${i}_${j}`, e.value);
-            }
-        }
-        if(selectedUser)       localStorage.setItem('report_selectedUser', selectedUser);
-        if(selectedType)       localStorage.setItem('report_selectedType', selectedType);
-        if(selectedCar)        localStorage.setItem('report_selectedCar', selectedCar);
-        if(selectedShift)      localStorage.setItem('report_selectedShift', selectedShift);
-        if(selectedChargeCar)  localStorage.setItem('charge_selectedChargeCar', selectedChargeCar);
-        if(selectedCheckCar)   localStorage.setItem('check_selectedCheckCar', selectedCheckCar);
-
-        ['chargeAmount','chargeTime','chargeMemo','chargeDate'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) localStorage.setItem('charge_' + id, el.value);
-        });
-        ['checkMemo','checkDate'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) localStorage.setItem('check_' + id, el.value);
-        });
-        checkItems.forEach(item => {
-            if(checkResults[item]) localStorage.setItem('check_check_' + item, checkResults[item]);
-        });
-    }
-
-    document.addEventListener('visibilitychange', function() {
-        if(document.visibilityState === 'hidden') saveAllState();
-    });
-    window.addEventListener('pagehide', saveAllState);
 
     function initUI() {
-        const ug = document.getElementById('userBtnGroup');
-        if(ug) { 
-            ug.innerHTML = ""; 
-            reportAuthors.forEach(u=> ug.innerHTML += `<button class="select-btn" data-val="${u.name}" onclick="selectUser(this,'${u.name}','${u.email}')">${u.name}</button>`); 
-        }
-        
-        const cl = document.getElementById('checkListContainer');
-        if(cl) {
-            cl.innerHTML = "";
-            checkItems.forEach(item => {
-                checkResults[item] = "";
-                cl.innerHTML += `<div class="check-item"><span class="check-label">${item}</span><div class="check-options"><button class="opt-btn good" data-item="${item}" onclick="toggleCheck('${item}', '양호', this)">양호</button><button class="opt-btn bad" data-item="${item}" onclick="toggleCheck('${item}', '불량', this)">불량</button></div></div>`;
-            });
-        }
-
-        const sc=document.getElementById('softContainer');
-        if(sc) { sc.innerHTML = ""; softKeys.forEach((n,i)=>{ sc.innerHTML+=`<div class="category-item"><span class="category-name">${i+1}. ${n}</span><div class="counter-group"><button class="circle-btn" onclick="stepSoft(${i},-1)">-</button><input id="s${i}" class="counter-val" value="0" readonly><button class="circle-btn" onclick="stepSoft(${i},1)">+</button></div></div>`; }); }
-        
-        const hb=document.getElementById('hardBody');
-        if(hb) { hb.innerHTML = ""; hardCauses.forEach((c,i)=>{ let row=`<tr><td class="hard-cause-label">${c}</td>`; hardActions.forEach((a,j)=>{ row+=`<td><div class="hard-cell-content"><button class="circle-btn" onclick="stepHard('${i}_${j}',1)">+</button><input id="h${i}_${j}" class="hard-val-input" value="0" readonly></div></td>`; }); hb.innerHTML+=row+`</tr>`; }); }
-        
-        const today = new Date().toISOString().substring(0, 10);
-        ['reportDate', 'chargeDate', 'checkDate', 'viewDate'].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = today; });
         if(localStorage.getItem('isLoggedIn') === 'true') showApp();
     }
 
-    function saveInput(el, formType) {
-        localStorage.setItem(formType + '_' + el.id, el.value);
-        updateFilledStyle(el);
-    }
-
-    function updateFilledStyle(el) {
-        if(['ssdVersion','autoDist','autoTime','totalOdo'].includes(el.id)) {
-            el.classList.toggle('filled', el.value.trim() !== '');
-        }
-    }
-
-    function loadSavedData() {
-        ['ssdVersion','autoDist','autoTime','totalOdo','workIssue','reportDate'].forEach(id => {
-            const val = localStorage.getItem('report_' + id);
-            if (val && document.getElementById(id)) document.getElementById(id).value = val;
-        });
-        for(let i=0; i<softKeys.length; i++) {
-            const val = localStorage.getItem('report_s'+i);
-            if(val) document.getElementById('s'+i).value = val;
-        }
-        for(let i=0; i<hardCauses.length; i++) {
-            for(let j=0; j<hardActions.length; j++) {
-                const val = localStorage.getItem(`report_h${i}_${j}`);
-                if(val) document.getElementById(`h${i}_${j}`).value = val;
-            }
-        }
-        updateTotals();
-        ['ssdVersion','autoDist','autoTime','totalOdo'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) updateFilledStyle(el);
-        });
-
-        ['chargeAmount','chargeTime','chargeMemo','chargeDate'].forEach(id => {
-            const val = localStorage.getItem('charge_' + id);
-            if (val && document.getElementById(id)) document.getElementById(id).value = val;
-        });
-
-        ['checkMemo','checkDate'].forEach(id => {
-            const val = localStorage.getItem('check_' + id);
-            if (val && document.getElementById(id)) document.getElementById(id).value = val;
-        });
-
-        restoreSelectedBtn('report_selectedUser', '#userBtnGroup .select-btn', (b) => {
-            const user = userList.find(u => u.name === b.dataset.val);
-            if(user) selectUser(b, user.name, user.email);
-        });
-        restoreSelectedBtn('report_selectedType', '#typeBtnGroup .select-btn', (b) => selectType(b, true));
-        restoreSelectedBtn('report_selectedCar', '#carBtnGroup .select-btn', (b) => selectCar(b));
-        restoreSelectedBtn('report_selectedShift', '#shiftBtnGroup .select-btn', (b) => selectShift(b));
-        restoreSelectedBtn('check_selectedCheckCar', '#checkCarBtnGroup .select-btn', (b) => selectCheckCar(b));
-        restoreSelectedBtn('charge_selectedChargeCar', '#chargeCarBtnGroup .select-btn', (b) => selectChargeCar(b));
-
-        checkItems.forEach(item => {
-            const val = localStorage.getItem('check_check_' + item);
-            if(val) {
-                const btn = document.querySelector(`.opt-btn[data-item="${item}"][onclick*="${val}"]`);
-                if(btn) toggleCheck(item, val, btn);
-            }
-        });
-    }
-
-    function restoreSelectedBtn(storageKey, selector, callback) {
-        const val = localStorage.getItem(storageKey);
-        if(val) {
-            const btn = Array.from(document.querySelectorAll(selector)).find(b => b.dataset.val === val || b.innerText === val);
-            if(btn) callback(btn);
-        }
-    }
-
-    function clearFormData(formType) {
-        Object.keys(localStorage).forEach(key => {
-            if(key.startsWith(formType + '_')) localStorage.removeItem(key);
-        });
-    }
-
-    function clearAllSessData() {
-        Object.keys(localStorage).forEach(key => {
-            if(key.startsWith('report_') || key.startsWith('charge_') || key.startsWith('check_')) {
-                localStorage.removeItem(key);
-            }
-        });
-    }
-
-    function resetReportForm() {
-        selectedUser = ""; selectedEmail = ""; selectedType = ""; selectedCar = ""; selectedShift = "";
-        document.querySelectorAll('#userBtnGroup .select-btn, #typeBtnGroup .select-btn, #carBtnGroup .select-btn, #shiftBtnGroup .select-btn').forEach(b => b.classList.remove('selected'));
-        const today = new Date().toISOString().substring(0, 10);
-        document.getElementById('reportDate').value = today;
-        ['ssdVersion','autoDist','autoTime','totalOdo','workIssue'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) { el.value = ""; el.classList.remove('filled'); }
-        });
-        for(let i=0; i<softKeys.length; i++) { const e=document.getElementById('s'+i); if(e) e.value=0; }
-        for(let i=0; i<hardCauses.length; i++) { for(let j=0; j<hardActions.length; j++) { const e=document.getElementById(`h${i}_${j}`); if(e) e.value=0; } }
-        updateTotals();
-        const carArea = document.getElementById('carBtnGroup');
-        const autoSec = document.getElementById('autoDriveSections');
-        carArea.style.opacity="1"; carArea.style.pointerEvents="auto";
-        autoSec.style.opacity="1"; autoSec.style.pointerEvents="auto";
-    }
-
-    function resetChargeForm() {
-        selectedChargeCar = "";
-        document.querySelectorAll('#chargeCarBtnGroup .select-btn').forEach(b => b.classList.remove('selected'));
-        const today = new Date().toISOString().substring(0, 10);
-        document.getElementById('chargeDate').value = today;
-        ['chargeAmount','chargeTime','chargeMemo'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) el.value = "";
-        });
-    }
-
-    function toggleCheck(item, status, btn) {
-        const parent = btn.parentElement;
-        if (checkResults[item] === status) { 
-            checkResults[item] = ""; btn.classList.remove('selected'); 
-            localStorage.removeItem('check_check_' + item);
-        } else { 
-            parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected')); 
-            btn.classList.add('selected'); checkResults[item] = status; 
-            localStorage.setItem('check_check_' + item, status);
-        }
-    }
-
-    function selectUser(b, n, e) {
-        const isSelected = b.classList.contains('selected');
-        document.querySelectorAll('#userBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
-        if (isSelected) { 
-            selectedUser = ""; selectedEmail = ""; localStorage.removeItem('report_selectedUser');
-        } else { 
-            b.classList.add('selected'); selectedUser = n; selectedEmail = e; 
-            localStorage.setItem('report_selectedUser', n);
-        }
-    }
-
-    // [수정] 카카오맵 초기화 함수로 전면 개편
     function initControlMap() {
         if (map) {
-            // 카카오맵은 레이아웃 크기가 변할 때 relayout()을 선언해주어야 정상 노출됩니다.
-            setTimeout(() => { map.relayout(); map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780)); }, 200);
+            setTimeout(() => { map.invalidateSize(); }, 200);
             return;
         }
-
-        const mapContainer = document.getElementById('mapContainer');
-        const mapOption = { 
-            center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 시청역 중심 기준
-            level: 5 // 지도의 확대 레벨
-        };
-
-        // 카카오 지도 생성
-        map = new kakao.maps.Map(mapContainer, mapOption);
+        map = L.map('mapContainer').setView([37.5665, 126.9780], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
         
-        // 초기 마커 뿌리기
         refreshVehiclePositions();
     }
 
-    // [수정] 카카오맵 방식의 마커 클리어 및 실시간 랜덤 노드 갱신 함수
     function refreshVehiclePositions() {
         if(!map) return;
         
-        // 기존 마커들 삭제
-        markersArray.forEach(m => m.setMap(null));
+        markersArray.forEach(m => map.removeLayer(m));
         markersArray = [];
-        if(activeInfoWindow) {
-            activeInfoWindow.close();
-            activeInfoWindow = null;
-        }
 
         const centerLat = 37.5665;
         const centerLng = 126.9780;
-        
-        // 커스텀 이미지 객체화
-        const kakaoMarkerImage = new kakao.maps.MarkerImage(markerImageUrl, markerImageSize, markerImageOption);
 
         for (let i = 801; i <= 810; i++) {
             const offsetLat = (Math.random() - 0.5) * 0.015;
             const offsetLng = (Math.random() - 0.5) * 0.015;
             const vLat = centerLat + offsetLat;
             const vLng = centerLng + offsetLng;
-            const markerPosition = new kakao.maps.LatLng(vLat, vLng);
 
-            // 카카오 마커 생성
-            const marker = new kakao.maps.Marker({
-                position: markerPosition,
-                image: kakaoMarkerImage,
-                clickable: true // 클릭 가능하도록 설정
-            });
-
-            // 지도에 마커 등록 및 추적 배열에 삽입
-            marker.setMap(map);
+            const marker = L.marker([vLat, vLng]).addTo(map)
+                .bindPopup(`<b>차량번호: gs${i}</b><br>실시간 관제 중`);
+            
             markersArray.push(marker);
-
-            // 인포윈도우(팝업창) 내 콘텐츠 템플릿 정의
-            const iwContent = `
-                <div class="kako-popup-content">
-                    <strong style="color:#1a73e8; font-size:14px;">차량번호: gs${i}</strong><br>
-                    <span style="color:#28a745; font-weight:bold;">● 실시간 관제 중</span><br>
-                    위도: ${vLat.toFixed(5)}<br>경도: ${vLng.toFixed(5)}
-                </div>
-            `;
-
-            // 카카오 인포윈도우 생성
-            const infowindow = new kakao.maps.InfoWindow({
-                content: iwContent,
-                removable: true // 닫기 버튼(X) 추가
-            });
-
-            // 마커 클릭 이벤트 핸들러 바인딩
-            kakao.maps.event.addListener(marker, 'click', function() {
-                if(activeInfoWindow) activeInfoWindow.close(); // 이전에 열린 팝업 닫기
-                infowindow.open(map, marker);
-                activeInfoWindow = infowindow; // 현재 열린 팝업 추적
-            });
-        }
-        console.log("Vehicle GPS Node Updated with Kakao Maps Classic Pin-Combined Car Icons.");
-    }
-
-    function selectCar(b) {
-        const isSelected = b.classList.contains('selected');
-        document.querySelectorAll('#carBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
-        if (isSelected) { selectedCar = ""; localStorage.removeItem('report_selectedCar'); }
-        else { b.classList.add('selected'); selectedCar = b.dataset.val; localStorage.setItem('report_selectedCar', b.dataset.val); }
-    }
-    function selectShift(b) {
-        const isSelected = b.classList.contains('selected');
-        document.querySelectorAll('#shiftBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
-        if (isSelected) { selectedShift = ""; localStorage.removeItem('report_selectedShift'); }
-        else { b.classList.add('selected'); selectedShift = b.dataset.val; localStorage.setItem('report_selectedShift', b.dataset.val); }
-    }
-    function selectChargeCar(b) {
-        const isSelected = b.classList.contains('selected');
-        document.querySelectorAll('#chargeCarBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
-        if (isSelected) { selectedChargeCar = ""; localStorage.removeItem('charge_selectedChargeCar'); }
-        else { b.classList.add('selected'); selectedChargeCar = b.dataset.val; localStorage.setItem('charge_selectedChargeCar', b.dataset.val); }
-    }
-    function selectCheckCar(b) {
-        const isSelected = b.classList.contains('selected');
-        document.querySelectorAll('#checkCarBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
-        if (isSelected) { selectedCheckCar = ""; localStorage.removeItem('check_selectedCheckCar'); }
-        else { b.classList.add('selected'); selectedCheckCar = b.dataset.val; localStorage.setItem('check_selectedCheckCar', b.dataset.val); }
-    }
-    function selectType(b, isRestore=false) {
-        const isSelected = b.classList.contains('selected');
-        if(!isRestore) { document.querySelectorAll('#typeBtnGroup .select-btn').forEach(x => x.classList.remove('selected')); }
-        if (isSelected && !isRestore) { selectedType = ""; localStorage.removeItem('report_selectedType'); }
-        else { b.classList.add('selected'); selectedType = b.dataset.val; localStorage.setItem('report_selectedType', b.dataset.val); }
-        
-        const carArea = document.getElementById('carBtnGroup');
-        const autoSec = document.getElementById('autoDriveSections');
-        if(selectedType === "내근") {
-            selectedCar = ""; document.querySelectorAll('#carBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
-            carArea.style.opacity = "0.3"; carArea.style.pointerEvents = "none";
-            autoSec.style.opacity = "0.3"; autoSec.style.pointerEvents = "none";
-        } else {
-            carArea.style.opacity = "1"; carArea.style.pointerEvents = "auto";
-            autoSec.style.opacity = "1"; autoSec.style.pointerEvents = "auto";
         }
     }
-    function stepSoft(idx, v) { const e = document.getElementById('s'+idx); let cur = parseInt(e.value)||0; cur += v; if(cur<0)cur=0; e.value=cur; updateTotals(); }
-    function stepHard(idStr, v) { const e = document.getElementById('h'+idStr); let cur = parseInt(e.value)||0; cur += v; if(cur<0)cur=0; e.value=cur; updateTotals(); }
-    function updateTotals() {
-        let soft = 0; for(let i=0; i<softKeys.length; i++) { soft += parseInt(document.getElementById('s'+i).value)||0; }
-        document.getElementById('softTotalDisp').innerText = soft;
-        let hard = 0; for(let i=0; i<hardCauses.length; i++) { for(let j=0; j<hardActions.length; j++) { hard += parseInt(document.getElementById(`h${i}_${j}`).value)||0; } }
-        document.getElementById('hardTotalDisp').innerText = hard;
-    }
+
     function toggleMenu() { const m = document.getElementById('sideMenu'); const o = document.getElementById('menuOverlay'); const isActive = m.classList.contains('active'); m.classList.toggle('active'); o.style.display = isActive ? 'none' : 'block'; }
     
     function switchPage(pid, title) {
         document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
         document.getElementById(pid).classList.add('active');
         document.getElementById('mainHeaderTitle').innerText = title;
-        document.getElementById('headerActions').style.display = (pid==='reportPage'||pid==='chargePage'||pid==='checkPage') ? 'block' : 'none';
         if(document.getElementById('sideMenu').classList.contains('active')) toggleMenu();
         
         if(pid === 'controlSystemPage') {
@@ -631,15 +193,7 @@
         }
         window.scrollTo(0,0);
     }
-    function resetForm() {
-        var isConfirm = confirm("새로고침 시 현재 작성 중인 내용이 모두 초기화됩니다. 진행하시겠습니까?");
-        if (isConfirm) {
-            const curPage = document.querySelector('.app-page.active').id;
-            if(curPage==='reportPage') { resetReportForm(); clearFormData('report'); }
-            else if(curPage==='chargePage') { resetChargeForm(); clearFormData('charge'); }
-            alert("작성 창이 초기화되었습니다.");
-        }
-    }
+
     function checkLogin() { const email = document.getElementById('emailInput').value.trim(); if(email.includes('@')) { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userEmail', email); showApp(); } }
     
     function showApp() { 
@@ -659,7 +213,7 @@
         }
     }
     
-    function logout() { localStorage.clear(); clearAllSessData(); location.reload(); }
+    function logout() { localStorage.clear(); location.reload(); }
     function showModal(title, text, type) {
         document.getElementById('modalTitle').innerText = title; document.getElementById('modalText').innerText = text;
         const footer = document.getElementById('modalFooter'); footer.innerHTML = "";
@@ -667,19 +221,6 @@
         document.getElementById('customModal').style.display = 'flex';
     }
     function closeModal() { document.getElementById('customModal').style.display = 'none'; }
-    
-    function fetchSchedule() {
-        fetch(`${GAS_URL}?type=schedule`).then(res => res.json()).then(data => { window.globalSchedules = data; renderSchedule(); });
-    }
-    function renderSchedule() {
-        const selectedDate = document.getElementById('viewDate').value;
-        const container = document.getElementById('scheduleListContainer'); container.innerHTML = "";
-        if(!window.globalSchedules || window.globalSchedules.length === 0) { container.innerHTML = `<div class="schedule-empty">조회된 운행 일정 데이터가 없습니다.</div>`; return; }
-        const filtered = window.globalSchedules.filter(item => { let sDate = String(item["날짜"]||"").trim().replace(/\. /g, '-').replace(/\./g, '-'); return sDate.includes(selectedDate); });
-        if (filtered.length === 0) { container.innerHTML = `<div class="schedule-empty">선택하신 날짜에 배정된 일정이 없습니다.</div>`; return; }
-        container.innerHTML = `<div class="sched-header"><div style="flex:1;">차량번호</div><div style="flex:1;" class="sched-divider">드라이버</div><div style="flex:1;">미션</div></div>`;
-        filtered.forEach(item => { container.innerHTML += `<div class="sched-row"><div class="sched-col" style="font-weight:bold; color:#1a73e8;">${item["차량번호"]||"-"}</div><div class="sched-col sched-divider" style="font-weight:600;">${item["드라이버"]||"-"}</div><div class="sched-col" style="font-size:13px; color:#555;">${item["미션"]||"-"}</div></div>`; });
-    }
 </script>
 </body>
 </html>
