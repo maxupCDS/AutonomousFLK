@@ -260,12 +260,13 @@
     let map = null;
     let markerGroup = null;
 
-    // [정밀 수정] 완전히 새로 디자인한 왜곡 없는 세련된 탑다운(Top-down) 정면 뷰 차량 SVG 마커
+    // [복구 및 최적화] 4번 스타일: 클래식 위치 핀(Pin) 형태 내부에 세단 자동차가 들어간 커스텀 아이콘
+    // iconAnchor를 [20, 40]으로 지정하여 핀의 뾰족한 끝 부분이 정확한 GPS 좌표를 찍도록 세팅했습니다.
     const carIcon = L.icon({
-        iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='36' height='36'><path fill='%231a73e8' d='M18.5 2h-13C4.67 2 4 2.67 4 3.5v17c0 .83.67 1.5 1.5 1.5h13c.83 0 1.5-.67 1.5-1.5v-17c0-.83-.67-1.5-1.5-1.5zm-13 2h13c.28 0 .5.22.5.5v2.83c-.42-.25-.92-.4-1.46-.4H5.96c-.54 0-1.04.15-1.46.4V4.5c0-.28.22-.5.5-.5zm13.5 11.5c0 .28-.22.5-.5.5h-13c-.28 0-.5-.22-.5-.5v-4.33c.42.25.92.4 1.46.4h11.08c.54 0 1.04-.15 1.46-.4v4.33zm-.5 4.5v1c0 .28-.22.5-.5.5h-13c-.28 0-.5-.22-.5-.5v-1h14.5z'/><path fill='%23ffffff' d='M6 8h12v4H6zm1.5 7h9v1.5h-9z'/></svg>",
-        iconSize: [36, 36],
-        iconAnchor: [18, 18],
-        popupAnchor: [0, -16]
+        iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' width='40' height='40'><path fill='%231a73e8' d='M20 2C11.16 2 4 9.16 4 18c0 11.05 16 20 16 20s16-8.95 16-20c0-8.84-7.16-16-16-16zm0 22c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z'/><path fill='%23ffffff' d='M20 12c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm4.5 7.5h-9v-1.2l.9-.9h7.2l.9.9v1.2zm-.6-2.7h-7.8l.6-.9c.2-.3.5-.4.8-.4h5c.3 0 .6.1.8.4l.6.9z'/></svg>",
+        iconSize: [40, 40],
+        iconAnchor: [20, 40], // 핀의 맨 아래 하단 중앙 끝부분이 중심점
+        popupAnchor: [0, -38] // 팝업창은 핀 머리 위쪽에 알맞게 뜨도록 조정
     });
 
     const userList=[{name:'황금철', email:'kchwang@future-link.ai'}, {name:'윤길홍', email:'khyoon@future-link.ai'}, {name:'예준우', email:'star7760@future-link.ai'}, {name:'길광림', email:'volfgangk@future-link.ai'}, {name:'전재훈', email:'level5@future-link.ai'}, {name:'오진혁', email:'dhwlstnwkd@future-link.ai'}, {name:'김준혁', email:'kirk@future-link.ai'}, {name:'박승규', email:'jeffstyle@future-link.ai'}, {name:'유승민', email:'max0825@future-link.ai'}, {name:'최대섭', email:'chleotjq1@future-link.ai'}, {name:'윤승현', email:'shyoon@future-link.ai'}, {name:'김선규', email:'skkim@future-link.ai'}, {name:'차두원', email:'dwcha@future-link.ai'}, {name:'박지혜', email:'jpark@future-link.ai'}];
@@ -525,7 +526,7 @@
             `);
             markerGroup.addLayer(marker);
         }
-        console.log("Vehicle GPS Node Updated with Fixed Top-down Car Icons.");
+        console.log("Vehicle GPS Node Updated with Classic Pin-Combined Car Icons.");
     }
 
     function selectCar(b) {
