@@ -91,7 +91,7 @@
         .sched-divider { border-left: 1px solid #dee2e6; border-right: 1px solid #dee2e6; }
         .schedule-empty { text-align: center; padding: 50px; color: #bbb; border: 1px dashed #ddd; border-radius: 12px; margin-top: 10px; font-size: 14px; }
 
-        /* [추가 항목] 자율주행 데이터 대시보드 및 테이블 스타일 */
+        /* 자율주행 데이터 대시보드 및 테이블 스타일 */
         .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .kpi-card { background: #fdfdfe; border: 1px solid #edf2f7; border-radius: 12px; padding: 14px; text-align: left; }
         .kpi-title { font-size: 11px; color: #718096; margin-bottom: 4px; font-weight: bold; }
@@ -130,7 +130,7 @@
     <div class="menu-header"><span id="displayUserName" style="font-size:1.2rem; font-weight:bold; display:block;">사용자님</span><span id="displayUserEmail" style="font-size:0.85rem; opacity:0.85;">email@future-link.ai</span></div>
     <div class="menu-list">
         <div class="menu-item" onclick="switchPage('homePage', '🏠 HOME')">🏠 홈으로 가기</div>
-        <div class="menu-item" onclick="switchPage('autonomousDataPage', '🤖 자율주행 데이터 장표')">🤖 자율주행 데이터 장표</div>
+        <div class="menu-item" onclick="switchPage('autonomousDataPage', '📈 자율주행 운영 통계')">📈 자율주행 운영 통계</div>
         <div class="menu-item" onclick="switchPage('viewSchedulePage', '📅 운행 일정 확인')">📅 운행 일정 확인</div>
         <div class="menu-item" onclick="switchPage('reportPage', '📋 자율주행 운행보고')">📋 자율주행 운행보고</div>
         <div class="menu-item" onclick="switchPage('chargePage', '⚡ 충전 관리')">⚡ 충전 관리</div>
@@ -150,7 +150,7 @@
         <img src="https://raw.githubusercontent.com/maxupCDS/safetydriver/main/logo_app.png" class="home-logo" alt="Logo">
         <div class="home-welcome">안전운행팀 업무 시스템</div>
         <div class="home-menu-grid">
-            <div class="home-card" onclick="switchPage('autonomousDataPage', '🤖 자율주행 데이터 장표')"><span class="home-card-icon">🤖</span><span class="home-card-text">자율주행 데이터 장표</span></div>
+            <div class="home-card" onclick="switchPage('autonomousDataPage', '📈 자율주행 운영 통계')"><span class="home-card-icon">📈</span><span class="home-card-text">자율주행 운영 통계</span></div>
             <div class="home-card" onclick="switchPage('viewSchedulePage', '📅 운행 일정 확인')"><span class="home-card-icon">📅</span><span class="home-card-text">운행 일정 확인</span></div>
             <div class="home-card" onclick="switchPage('reportPage', '📋 자율주행 운행보고')"><span class="home-card-icon">📋</span><span class="home-card-text">자율주행 운행보고</span></div>
             <div class="home-card" onclick="switchPage('chargePage', '⚡ 충전 관리')"><span class="home-card-icon">⚡</span><span class="home-card-text">충전 관리 기록</span></div>
@@ -161,7 +161,7 @@
         <div class="section">
             <label>데이터 실시간 새로고침</label>
             <div style="display:flex; align-items:center; gap:8px;">
-                <div style="font-size:13px; color:#666; flex:1;">자율주행데이터 장표 탭의 최신 실증 현황을 실시간 파싱합니다.</div>
+                <div style="font-size:13px; color:#666; flex:1;">자율주행 운영 통계 탭의 최신 실증 현황을 실시간 파싱합니다.</div>
                 <button onclick="fetchAutonomousData()" style="background:#1a73e8; border:none; border-radius:10px; width:48px; height:48px; font-size:20px; color:white; flex-shrink:0; cursor:pointer;">🔄</button>
             </div>
         </div>
@@ -306,7 +306,7 @@
         initUI();
         loadSavedData();
         fetchSchedule();
-        fetchAutonomousData(); // [추가 항목] 자율주행 데이터 초기 바인딩 로드
+        fetchAutonomousData();
     }
 
     function saveAllState() {
@@ -511,9 +511,9 @@
         }
     }
 
-    /* [신규 기능 추가] 구글 시트에서 자율주행 데이터 불러오기 및 렌더링 스크립트 */
     function fetchAutonomousData() {
         const tbody = document.getElementById('autonomousTableBody');
+        if(!tbody) return;
         tbody.innerHTML = `<tr><td colspan="4" style="padding:30px; color:#999;">최신 실증 통계를 갱신 중입니다...</td></tr>`;
         
         fetch(`${GAS_URL}?type=autonomous`)
@@ -558,7 +558,6 @@
             });
     }
 
-    // 기존 코드 안전 유지 (이하 생략되어 있던 구조체 바인딩 복원 보존)
     function selectCar(b) {
         const isSelected = b.classList.contains('selected');
         document.querySelectorAll('#carBtnGroup .select-btn').forEach(x => x.classList.remove('selected'));
@@ -615,7 +614,7 @@
         document.getElementById('mainHeaderTitle').innerText = title;
         document.getElementById('headerActions').style.display = (pid==='reportPage'||pid==='chargePage'||pid==='checkPage') ? 'block' : 'none';
         if(document.getElementById('sideMenu').classList.contains('active')) toggleMenu();
-        if(pid === 'autonomousDataPage') fetchAutonomousData(); // 페이지 전환 시 데이터 강제 동기화
+        if(pid === 'autonomousDataPage') fetchAutonomousData();
         window.scrollTo(0,0);
     }
     function resetForm() {
@@ -624,7 +623,18 @@
         else if(curPage==='chargePage') { resetChargeForm(); clearFormData('charge'); }
     }
     function checkLogin() { const email = document.getElementById('emailInput').value.trim(); if(email.includes('@')) { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userEmail', email); showApp(); } }
-    function showApp() { document.getElementById('loginOverlay').style.display='none'; document.getElementById('mainApp').style.display='block'; document.getElementById('displayUserEmail').innerText = localStorage.getItem('userEmail')||''; }
+    
+    function showApp() { 
+        document.getElementById('loginOverlay').style.display='none'; 
+        document.getElementById('mainApp').style.display='block'; 
+        const email = localStorage.getItem('userEmail') || '';
+        document.getElementById('displayUserEmail').innerText = email; 
+        if(email) {
+            const userId = email.split('@')[0];
+            document.getElementById('displayUserName').innerText = userId + "님";
+        }
+    }
+    
     function logout() { localStorage.clear(); clearAllSessData(); location.reload(); }
     function showModal(title, text, type) {
         document.getElementById('modalTitle').innerText = title; document.getElementById('modalText').innerText = text;
@@ -634,7 +644,6 @@
     }
     function closeModal() { document.getElementById('customModal').style.display = 'none'; }
     
-    // 운행 일정 동적 바인딩 파트
     function fetchSchedule() {
         fetch(`${GAS_URL}?type=schedule`).then(res => res.json()).then(data => { window.globalSchedules = data; renderSchedule(); });
     }
