@@ -260,9 +260,9 @@
     let map = null;
     let markerGroup = null;
 
-    // [수정] 자동차 모양 커스텀 아이콘 객체 정의 (Data URI SVG 형태로 별도 파일 링크 없이 작동 안정성 확보)
+    // [수정] 3번 탑다운(Top-down) 정면 뷰 커스텀 아이콘 객체 정의
     const carIcon = L.icon({
-        iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='32' height='32'><path fill='%231a73e8' d='M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.24-3.72c.1-.31.39-.53.72-.53h10.07c.33 0 .62.22.72.53L19 11H5z'/></svg>",
+        iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='32' height='32'><path fill='%231a73e8' d='M5 11h14v2H5zm14-5H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 9H6v-2h12v2zm0-4H6V9h12v2z'/></svg>",
         iconSize: [32, 32],
         iconAnchor: [16, 16],
         popupAnchor: [0, -14]
@@ -502,7 +502,6 @@
         refreshVehiclePositions();
     }
 
-    /* [수정] 마커 생성 부분에 carIcon 커스텀 아이콘 속성 추가 적용 */
     function refreshVehiclePositions() {
         if(!markerGroup) return;
         markerGroup.clearLayers();
@@ -516,7 +515,6 @@
             const vLat = centerLat + offsetLat;
             const vLng = centerLng + offsetLng;
 
-            // icon 속성에 정의한 carIcon 지정
             const marker = L.marker([vLat, vLng], { icon: carIcon });
             marker.bindPopup(`
                 <div style="font-family:sans-serif; font-size:13px; line-height:1.4;">
@@ -527,7 +525,7 @@
             `);
             markerGroup.addLayer(marker);
         }
-        console.log("Vehicle GPS Node Updated with Car Icons.");
+        console.log("Vehicle GPS Node Updated with Top-down Car Icons.");
     }
 
     function selectCar(b) {
@@ -628,7 +626,7 @@
         if(type==='cancel_only') { footer.innerHTML = `<button class="modal-btn" style="color:#666;" onclick="closeModal()">확인</button>`; }
         document.getElementById('customModal').style.display = 'flex';
     }
-    function closeModal() { document.getElementById('customModal').style.none; }
+    function closeModal() { document.getElementById('customModal').style.display = 'none'; }
     
     function fetchSchedule() {
         fetch(`${GAS_URL}?type=schedule`).then(res => res.json()).then(data => { window.globalSchedules = data; renderSchedule(); });
