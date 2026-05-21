@@ -624,14 +624,24 @@
     }
     function checkLogin() { const email = document.getElementById('emailInput').value.trim(); if(email.includes('@')) { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userEmail', email); showApp(); } }
     
+    /* [수정 처리] 로그인 시 userList에서 이메일을 검색해 실명 매칭 고정 */
     function showApp() { 
         document.getElementById('loginOverlay').style.display='none'; 
         document.getElementById('mainApp').style.display='block'; 
         const email = localStorage.getItem('userEmail') || '';
         document.getElementById('displayUserEmail').innerText = email; 
+        
         if(email) {
-            const userId = email.split('@')[0];
-            document.getElementById('displayUserName').innerText = userId + "님";
+            // 사내 계정 목록(userList)에서 입력한 이메일과 매칭되는 유저를 조회
+            const matchedUser = userList.find(u => u.email.toLowerCase() === email.toLowerCase());
+            if (matchedUser) {
+                // 매치되는 이름이 있으면 이름을 정상 표기 (예: 최대섭님)
+                document.getElementById('displayUserName').innerText = matchedUser.name + "님";
+            } else {
+                // 예외상황(목록에 없는 이메일) 발생 시에만 ID 파싱 적용
+                const userId = email.split('@')[0];
+                document.getElementById('displayUserName').innerText = userId + "님";
+            }
         }
     }
     
