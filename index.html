@@ -49,4 +49,233 @@
 
         /* 관제시스템용 지도 컨테이너 스타일 */
         #mapContainer { width: 100%; height: 450px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.06); z-index: 1; }
-        .map-status-box { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13
+        .map-status-box { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; color: #666; }
+
+        /* [추가] 카카오맵 전용 인포윈도우 커스텀 스타일 */
+        .kakao-popup-card { padding: 10px; font-size: 13px; line-height: 1.5; width: 160px; font-family: sans-serif; }
+
+        /* 사이드 메뉴 */
+        #sideMenu { position: fixed; top: 0; left: -280px; width: 260px; height: 100%; background: white; z-index: 25000; transition: 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        #sideMenu.active { left: 0; }
+        .menu-header { padding: 50px 20px 25px; background: #1a73e8; color: white; }
+        .menu-list { flex: 1; display: flex; flex-direction: column; }
+        .menu-item { padding: 18px 20px; border-bottom: 1px solid #f1f3f5; cursor: pointer; font-size: 15px; font-weight: 600; color: #444; }
+        .menu-footer { margin-top: auto; padding: 20px; border-top: 1px solid #eee; background: #fcfcfc; }
+        .logout-btn { color: #d32f2f; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 24000; display: none; }
+        .app-page { display: none; }
+        .app-page.active { display: block; }
+        #customModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 30000; padding: 20px; }
+        .modal-card { background: white; border-radius: 20px; width: 100%; max-width: 320px; overflow: hidden; }
+        .modal-body { padding: 25px 20px; text-align: center; border-bottom: 1px solid #eee; }
+        .modal-footer { display: flex; }
+        .modal-btn { flex: 1; padding: 15px; border: none; background: transparent; font-size: 16px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay"><div class="login-card"><div class="team-title">FUTURE LINK</div><input type="email" id="emailInput" class="login-input" placeholder="사내 이메일 입력"><div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:20px; color:#666; font-size:14px;"><input type="checkbox" id="keepLogin"><label for="keepLogin" style="margin:0; font-size:14px; font-weight:normal;">자동 로그인 유지</label></div><button class="btn-login" onclick="checkLogin()">시작하기</button></div></div>
+<div id="menuOverlay" class="menu-overlay" onclick="toggleMenu()"></div>
+<div id="sideMenu">
+    <div class="menu-header"><span id="displayUserName" style="font-size:1.2rem; font-weight:bold; display:block;">사용자님</span><span id="displayUserEmail" style="font-size:0.85rem; opacity:0.85;">email@future-link.ai</span></div>
+    <div class="menu-list">
+        <div class="menu-item" onclick="switchPage('homePage', '🏠 HOME')">🏠 홈으로 가기</div>
+        <div class="menu-item" onclick="switchPage('controlSystemPage', '🛰️ 무인 차량 관제 시스템')">🛰️ 무인 차량 관제 시스템</div>
+    </div>
+    <div class="menu-footer"><div class="logout-btn" onclick="logout()"><span>로그아웃</span></div></div>
+</div>
+
+<div id="customModal"><div class="modal-card"><div class="modal-body"><div id="modalTitle" style="font-weight:bold; color:#1a73e8; margin-bottom:8px; font-size:18px;">알림</div><div id="modalText" style="font-size:15px; color:#555; white-space:pre-line;">내용</div></div><div class="modal-footer" id="modalFooter"></div></div></div>
+
+<div id="mainApp">
+    <div class="header-area">
+        <div style="display:flex; align-items:center;"><button onclick="toggleMenu()" style="font-size:26px; background:none; border:none; color:#1a73e8; cursor:pointer; padding-right:10px;">☰</button><div class="header-title" id="mainHeaderTitle">HOME</div></div>
+    </div>
+
+    <div id="homePage" class="app-page active">
+        <img src="https://raw.githubusercontent.com/maxupCDS/safetydriver/main/logo_app.png" class="home-logo" alt="Logo">
+        <div class="home-welcome">안전운행팀 업무 시스템</div>
+        <div class="home-menu-grid">
+            <div class="home-card" onclick="switchPage('controlSystemPage', '🛰️ 무인 차량 관제 시스템')"><span class="home-card-icon">🛰️</span><span class="home-card-text">무인 차량 관제 시스템</span></div>
+        </div>
+    </div>
+
+    <div id="controlSystemPage" class="app-page">
+        <div class="section">
+            <label>실시간 차량 위치 관제</label>
+            <div class="map-status-box">
+                <div style="flex:1;">실증 지구 내에서 운행 중인 gs801 ~ gs810 차량의 실시간 GPS 위치 노드입니다.</div>
+                <button onclick="refreshVehiclePositions()" style="background:#1a73e8; border:none; border-radius:10px; width:48px; height:48px; font-size:20px; color:white; flex-shrink:0; cursor:pointer;">🔄</button>
+            </div>
+            <div id="mapContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let backPressedOnce = false;
+    history.pushState(null, null, location.href);
+    window.addEventListener('popstate', function() {
+        if (backPressedOnce) {
+            history.back();
+            return;
+        }
+        history.pushState(null, null, location.href);
+        backPressedOnce = true;
+        showModal("앱 종료", "앱을 종료하시겠습니까?\n뒤로가기를 한 번 더 누르시면 앱이 종료됩니다.", "cancel_only");
+        setTimeout(() => { backPressedOnce = false; }, 3000);
+    });
+
+    let touchStartY = 0;
+    document.addEventListener('touchstart', function(e) { touchStartY = e.touches[0].clientY; }, { passive: true });
+    document.addEventListener('touchmove', function(e) {
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        if (scrollTop === 0 && e.touches[0].clientY > touchStartY) { e.preventDefault(); }
+    }, { passive: false });
+
+    // [변경] 카카오맵 인스턴스 및 팝업 추적 변수 선언
+    let map = null;
+    let markersArray = [];
+    let activeInfoWindow = null;
+
+    // [추가] 관제용 파란색 커스텀 마커 SVG 핀 이미지 정의
+    const markerImageUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' width='40' height='40'><path fill='%231a73e8' d='M20 2C11.16 2 4 9.16 4 18c0 11.05 16 20 16 20s16-8.95 16-20c0-8.84-7.16-16-16-16zm0 22c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z'/><path fill='%23ffffff' d='M20 12c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm4.5 7.5h-9v-1.2l.9-.9h7.2l.9.9v1.2zm-.6-2.7h-7.8l.6-.9c.2-.3.5-.4.8-.4h5c.3 0 .6.1.8.4l.6.9z'/></svg>";
+    const markerImageSize = new kakao.maps.Size(40, 40);
+    const markerImageOption = { offset: new kakao.maps.Point(20, 40) };
+
+    const userList=[{name:'황금철', email:'kchwang@future-link.ai'}, {name:'윤길홍', email:'khyoon@future-link.ai'}, {name:'예준우', email:'star7760@future-link.ai'}, {name:'길광림', email:'volfgangk@future-link.ai'}, {name:'전재훈', email:'level5@future-link.ai'}, {name:'오진혁', email:'dhwlstnwkd@future-link.ai'}, {name:'김준혁', email:'kirk@future-link.ai'}, {name:'박승규', email:'jeffstyle@future-link.ai'}, {name:'유승민', email:'max0825@future-link.ai'}, {name:'최대섭', email:'chleotjq1@future-link.ai'}, {name:'윤승현', email:'shyoon@future-link.ai'}, {name:'김선규', email:'skkim@future-link.ai'}, {name:'차두원', email:'dwcha@future-link.ai'}, {name:'박지혜', email:'jpark@future-link.ai'}];
+
+    window.onload = function(){
+        initUI();
+    }
+
+    function initUI() {
+        if(localStorage.getItem('isLoggedIn') === 'true') showApp();
+    }
+
+    // [변경] 카카오맵 방식의 지도 초기화 로직 구현
+    function initControlMap() {
+        if (map) {
+            // 사이드 메뉴 전환 시 지도가 일부분만 깨지는 것을 방지하기 위해 릴레이아웃 호출
+            setTimeout(() => { 
+                map.relayout(); 
+                map.setCenter(new kakao.maps.LatLng(37.5665, 126.9780));
+            }, 200);
+            return;
+        }
+
+        const mapContainer = document.getElementById('mapContainer');
+        const mapOption = { 
+            center: new kakao.maps.LatLng(37.5665, 126.9780), // 서울 기본 중심좌표
+            level: 5 // 지도 확대 레벨
+        };
+
+        map = new kakao.maps.Map(mapContainer, mapOption);
+        refreshVehiclePositions();
+    }
+
+    // [변경] 카카오맵에 맞춤화된 마커 청소 및 실시간 랜덤 마커 재생성 로직
+    function refreshVehiclePositions() {
+        if(!map) return;
+        
+        // 1. 기존에 떠 있던 카카오 마커들을 지도에서 모두 제거
+        markersArray.forEach(m => m.setMap(null));
+        markersArray = [];
+        
+        // 기존 오픈된 인포윈도우가 있다면 닫기
+        if(activeInfoWindow) {
+            activeInfoWindow.close();
+            activeInfoWindow = null;
+        }
+
+        const centerLat = 37.5665;
+        const centerLng = 126.9780;
+        
+        const kakaoMarkerImage = new kakao.maps.MarkerImage(markerImageUrl, markerImageSize, markerImageOption);
+
+        for (let i = 801; i <= 810; i++) {
+            const offsetLat = (Math.random() - 0.5) * 0.015;
+            const offsetLng = (Math.random() - 0.5) * 0.015;
+            const vLat = centerLat + offsetLat;
+            const vLng = centerLng + offsetLng;
+            const markerPosition = new kakao.maps.LatLng(vLat, vLng);
+
+            // 카카오 마커 객체 인스턴스 생성
+            const marker = new kakao.maps.Marker({
+                position: markerPosition,
+                image: kakaoMarkerImage,
+                clickable: true
+            });
+
+            // 생성한 마커를 카카오 지도 위에 등록 및 배열 백업
+            marker.setMap(map);
+            markersArray.push(marker);
+
+            // 말풍선 팝업(InfoWindow)에 담길 내부 템플릿 스트링 정의
+            const iwContent = `
+                <div class="kakao-popup-card">
+                    <strong style="color:#1a73e8; font-size:14px;">차량번호: gs${i}</strong><br>
+                    <span style="color:#28a745; font-weight:bold;">● 실시간 수신 중</span><br>
+                    위도: ${vLat.toFixed(5)}<br>경도: ${vLng.toFixed(5)}
+                </div>
+            `;
+
+            const infowindow = new kakao.maps.InfoWindow({
+                content: iwContent,
+                removable: true
+            });
+
+            // 마커 클릭 시 다른 팝업은 닫고 현재 선택한 팝업만 토글하여 띄우기
+            kakao.maps.event.addListener(marker, 'click', function() {
+                if(activeInfoWindow) activeInfoWindow.close();
+                infowindow.open(map, marker);
+                activeInfoWindow = infowindow;
+            });
+        }
+    }
+
+    function toggleMenu() { const m = document.getElementById('sideMenu'); const o = document.getElementById('menuOverlay'); const isActive = m.classList.contains('active'); m.classList.toggle('active'); o.style.display = isActive ? 'none' : 'block'; }
+    
+    function switchPage(pid, title) {
+        document.querySelectorAll('.app-page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pid).classList.add('active');
+        document.getElementById('mainHeaderTitle').innerText = title;
+        if(document.getElementById('sideMenu').classList.contains('active')) toggleMenu();
+        
+        if(pid === 'controlSystemPage') {
+            initControlMap();
+        }
+        window.scrollTo(0,0);
+    }
+
+    function checkLogin() { const email = document.getElementById('emailInput').value.trim(); if(email.includes('@')) { localStorage.setItem('isLoggedIn', 'true'); localStorage.setItem('userEmail', email); showApp(); } }
+    
+    function showApp() { 
+        document.getElementById('loginOverlay').style.display='none'; 
+        document.getElementById('mainApp').style.display='block'; 
+        const email = localStorage.getItem('userEmail') || '';
+        document.getElementById('displayUserEmail').innerText = email; 
+        
+        if(email) {
+            const matchedUser = userList.find(u => u.email.toLowerCase() === email.toLowerCase());
+            if (matchedUser) {
+                document.getElementById('displayUserName').innerText = matchedUser.name + "님";
+            } else {
+                const userId = email.split('@')[0];
+                document.getElementById('displayUserName').innerText = userId + "님";
+            }
+        }
+    }
+    
+    function logout() { localStorage.clear(); location.reload(); }
+    function showModal(title, text, type) {
+        document.getElementById('modalTitle').innerText = title; document.getElementById('modalText').innerText = text;
+        const footer = document.getElementById('modalFooter'); footer.innerHTML = "";
+        if(type==='cancel_only') { footer.innerHTML = `<button class="modal-btn" style="color:#666;" onclick="closeModal()">확인</button>`; }
+        document.getElementById('customModal').style.display = 'flex';
+    }
+    function closeModal() { document.getElementById('customModal').style.display = 'none'; }
+</script>
+</body>
+</html>
