@@ -260,12 +260,12 @@
     let map = null;
     let markerGroup = null;
 
-    // [수정] 3번 탑다운(Top-down) 정면 뷰 커스텀 아이콘 객체 정의
+    // [정밀 수정] 완전히 새로 디자인한 왜곡 없는 세련된 탑다운(Top-down) 정면 뷰 차량 SVG 마커
     const carIcon = L.icon({
-        iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='32' height='32'><path fill='%231a73e8' d='M5 11h14v2H5zm14-5H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 9H6v-2h12v2zm0-4H6V9h12v2z'/></svg>",
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -14]
+        iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='36' height='36'><path fill='%231a73e8' d='M18.5 2h-13C4.67 2 4 2.67 4 3.5v17c0 .83.67 1.5 1.5 1.5h13c.83 0 1.5-.67 1.5-1.5v-17c0-.83-.67-1.5-1.5-1.5zm-13 2h13c.28 0 .5.22.5.5v2.83c-.42-.25-.92-.4-1.46-.4H5.96c-.54 0-1.04.15-1.46.4V4.5c0-.28.22-.5.5-.5zm13.5 11.5c0 .28-.22.5-.5.5h-13c-.28 0-.5-.22-.5-.5v-4.33c.42.25.92.4 1.46.4h11.08c.54 0 1.04-.15 1.46-.4v4.33zm-.5 4.5v1c0 .28-.22.5-.5.5h-13c-.28 0-.5-.22-.5-.5v-1h14.5z'/><path fill='%23ffffff' d='M6 8h12v4H6zm1.5 7h9v1.5h-9z'/></svg>",
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+        popupAnchor: [0, -16]
     });
 
     const userList=[{name:'황금철', email:'kchwang@future-link.ai'}, {name:'윤길홍', email:'khyoon@future-link.ai'}, {name:'예준우', email:'star7760@future-link.ai'}, {name:'길광림', email:'volfgangk@future-link.ai'}, {name:'전재훈', email:'level5@future-link.ai'}, {name:'오진혁', email:'dhwlstnwkd@future-link.ai'}, {name:'김준혁', email:'kirk@future-link.ai'}, {name:'박승규', email:'jeffstyle@future-link.ai'}, {name:'유승민', email:'max0825@future-link.ai'}, {name:'최대섭', email:'chleotjq1@future-link.ai'}, {name:'윤승현', email:'shyoon@future-link.ai'}, {name:'김선규', email:'skkim@future-link.ai'}, {name:'차두원', email:'dwcha@future-link.ai'}, {name:'박지혜', email:'jpark@future-link.ai'}];
@@ -525,7 +525,7 @@
             `);
             markerGroup.addLayer(marker);
         }
-        console.log("Vehicle GPS Node Updated with Top-down Car Icons.");
+        console.log("Vehicle GPS Node Updated with Fixed Top-down Car Icons.");
     }
 
     function selectCar(b) {
