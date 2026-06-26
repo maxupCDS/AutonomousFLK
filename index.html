@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -158,7 +159,7 @@
         <div class="section">
             <label>실시간 차량 위치 관제</label>
             <div class="map-status-box">
-                <div style="flex:1;">실증 지구 내에서 운행 중인 gs801 ~ gs810 차량의 실시간 GPS 위치 노드입니다.</div>
+                <div style="flex:1;">실증 지구 내에서 운행 중인 gs801 ~ gs810 차량의 실시간 GPS 위치 노드입니다.<br><span id="autoRefreshStatus" style="color:#1a73e8; font-weight:bold; font-size:12px;">🔄 5초마다 자동 갱신 중</span></div>
                 <button onclick="refreshVehiclePositions()" style="background:#1a73e8; border:none; border-radius:10px; width:48px; height:48px; font-size:20px; color:white; flex-shrink:0; cursor:pointer;">🔄</button>
             </div>
             <div id="mapContainer"></div>
@@ -217,6 +218,7 @@
     let map = null;
     let markersArray = [];
     let activeInfoWindow = null;
+    let autoRefreshInterval = null; // 관제 화면 자동 갱신 타이머
 
     const markerImageUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' width='40' height='40'><path fill='%231a73e8' d='M20 2C11.16 2 4 9.16 4 18c0 11.05 16 20 16 20s16-8.95 16-20c0-8.84-7.16-16-16-16zm0 22c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z'/><path fill='%23ffffff' d='M20 12c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm4.5 7.5h-9v-1.2l.9-.9h7.2l.9.9v1.2zm-.6-2.7h-7.8l.6-.9c.2-.3.5-.4.8-.4h5c.3 0 .6.1.8.4l.6.9z'/></svg>";
     const markerImageSize = new kakao.maps.Size(40, 40);
@@ -320,6 +322,10 @@
         };
         map = new kakao.maps.Map(mapContainer, mapOption);
         refreshVehiclePositions();
+
+        // 5초마다 자동 갱신 시작
+        if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+        autoRefreshInterval = setInterval(refreshVehiclePositions, 5000);
     }
 
     // =============================================
@@ -447,12 +453,12 @@
             { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
         );
 
-        // 10초마다 Firebase에 전송
+        // 5초마다 Firebase에 전송
         gpsSendInterval = setInterval(() => {
             if (currentLat && currentLng) {
                 sendPositionToFirebase(vehicleId);
             }
-        }, 10000);
+        }, 5000);
     }
 
     // =============================================
@@ -531,6 +537,11 @@
         document.getElementById(pid).classList.add('active');
         document.getElementById('mainHeaderTitle').innerText = title;
         if (document.getElementById('sideMenu').classList.contains('active')) toggleMenu();
+
+        // 관제 페이지가 아니면 자동갱신 중지
+        if (pid !== 'controlSystemPage') {
+            if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; }
+        }
         if (pid === 'controlSystemPage') initControlMap();
         window.scrollTo(0, 0);
     }
