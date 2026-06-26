@@ -256,7 +256,19 @@
     // 앱 초기화
     // =============================================
     window.onload = function() {
-        if (localStorage.getItem('isLoggedIn') === 'true') showApp();
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            showApp();
+            // URL 파라미터에 vehicle이 있으면 차량 GPS 페이지로 자동 이동
+            const urlParams = new URLSearchParams(window.location.search);
+            const vehicleParam = urlParams.get('vehicle');
+            if (vehicleParam) {
+                switchPage('vehiclePage', '📡 차량 GPS 전송');
+                const select = document.getElementById('vehicleIdSelect');
+                select.value = vehicleParam;
+                // 1초 후 자동으로 GPS 전송 시작
+                setTimeout(() => { startGpsTracking(); }, 1000);
+            }
+        }
     };
 
     let backPressedOnce = false;
