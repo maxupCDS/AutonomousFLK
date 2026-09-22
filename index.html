@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -84,6 +85,20 @@
         .soft-sub-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #eee; }
         .soft-sub-item:last-child { border-bottom: none; }
         .soft-sub-name { font-size: 13px; color: #333; font-weight: 600; }
+        .hard-cat-block { border-bottom: 1px solid #f8fafc; }
+        .hard-cat-block:last-child { border-bottom: none; }
+        .hard-cat-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+        .hard-cat-name { font-size: 14px; font-weight: 600; color: #4a5568; cursor: pointer; }
+        .hard-cat-checkbox { width: 20px; height: 20px; cursor: pointer; accent-color: #dc3545; }
+        .hard-sub-list { display: none; padding: 0 0 8px 15px; }
+        .hard-sub-list.expanded { display: block; }
+        .hard-sub-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #eee; }
+        .hard-sub-item:last-child { border-bottom: none; }
+        .hard-sub-name { font-size: 13px; color: #333; font-weight: 600; }
+        .hard-counter-group { display: flex; align-items: center; gap: 10px; }
+        .hard-counter-btn { border: none; background: #dc3545; color: white; border-radius: 50%; width: 30px; height: 30px; font-size: 20px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+        .hard-counter-btn:active { background: #b02a37; }
+        .hard-counter-val { width: 35px; text-align: center; border: none; font-weight: bold; font-size: 16px; background: transparent; outline: none; color: #dc3545; }
 
         .hard-table-wrapper { width: 100%; border: 1px solid #eee; border-radius: 10px; overflow: hidden; }
         .hard-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -119,13 +134,6 @@
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 30000; padding: 20px; }
         .modal-content { background: white; border-radius: 20px; width: 100%; max-width: 320px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
         #customModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 30000; padding: 20px; }
-
-        /* [OCR 카메라 인식 오버레이] */
-        .ocr-cam-btn { background: #f0f6ff !important; border-color: #1a73e8 !important; }
-        #ocrLoadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; z-index: 31000; flex-direction: column; }
-        #ocrLoadingOverlay .ocr-spinner { width: 46px; height: 46px; border: 5px solid rgba(255,255,255,0.25); border-top-color: #ffffff; border-radius: 50%; animation: ocr-spin 0.8s linear infinite; margin-bottom: 16px; }
-        #ocrLoadingOverlay .ocr-status-text { color: #fff; font-size: 15px; font-weight: bold; }
-        @keyframes ocr-spin { to { transform: rotate(360deg); } }
         .modal-card { background: white; border-radius: 20px; width: 100%; max-width: 320px; overflow: hidden; }
         .modal-body { padding: 25px 20px; text-align: center; border-bottom: 1px solid #eee; }
         .modal-footer { display: flex; }
@@ -210,6 +218,11 @@
         body.dark-mode .soft-cat-name { color: #eeeeee !important; }
         body.dark-mode .soft-sub-item { border-bottom-color: #333 !important; }
         body.dark-mode .soft-sub-name { color: #f0f0f0 !important; }
+        body.dark-mode .hard-cat-block { border-bottom-color: #2a2a2a !important; }
+        body.dark-mode .hard-cat-name { color: #eeeeee !important; }
+        body.dark-mode .hard-sub-item { border-bottom-color: #333 !important; }
+        body.dark-mode .hard-sub-name { color: #f0f0f0 !important; }
+        body.dark-mode .hard-counter-val { color: #ff6b6b !important; }
 
         /* 하드 테이크오버 테이블 */
         body.dark-mode .hard-table-wrapper { border-color: #333 !important; }
@@ -259,8 +272,6 @@
     <div class="menu-footer"><div class="logout-btn" onclick="logout()"><span>로그아웃</span><span style="font-size:12px; color:#999; font-weight:normal;">Sign Out</span></div></div>
 </div>
 
-<input type="file" id="ocrCameraInput" accept="image/*" capture="environment" style="display:none;" onchange="handleOCRCapture(event)">
-<div id="ocrLoadingOverlay"><div class="ocr-spinner"></div><div class="ocr-status-text" id="ocrStatusText">사진을 분석하고 있습니다...</div></div>
 <div id="customModal"><div class="modal-card"><div class="modal-body"><div id="modalTitle" style="font-weight:bold; color:#1a73e8; margin-bottom:8px; font-size:18px;">알림</div><div id="modalText" style="font-size:15px; color:#555; white-space:pre-line;">내용</div></div><div class="modal-footer" id="modalFooter"></div></div></div>
 
 <div id="mainApp">
@@ -331,7 +342,6 @@
                 <label>7. 자율거리(km)</label>
                 <div style="display: flex; gap: 6px;">
                     <input type="number" id="autoDist" class="text-input" step="any" oninput="saveInput(this, 'report')">
-                    <button type="button" class="select-btn ocr-cam-btn" onclick="triggerCamera('autoDist')" style="width: 46px; padding: 0; font-size: 18px; margin-top:0; height: 46px; flex-shrink:0;">📷</button>
                     <button type="button" class="select-btn" onclick="openAutoDistCalculator()" style="width: auto; padding: 0 10px; font-size: 13px; white-space: nowrap; margin-top:0; height: 46px;">📏 거리 합산</button>
                 </div>
             </div>
@@ -339,13 +349,12 @@
                 <label>8. 자율시간(6자리)</label>
                 <div style="display: flex; gap: 6px;">
                     <input type="number" id="autoTime" class="text-input" oninput="saveInput(this, 'report'); validateAutoTimeFormat(this);">
-                    <button type="button" class="select-btn ocr-cam-btn" onclick="triggerCamera('autoTime')" style="width: 46px; padding: 0; font-size: 18px; margin-top:0; height: 46px; flex-shrink:0;">📷</button>
                     <button type="button" class="select-btn" onclick="openAutoTimeCalculator()" style="width: auto; padding: 0 10px; font-size: 13px; white-space: nowrap; margin-top:0; height: 46px;">⏱️ 시간 합산</button>
                 </div>
             </div>
             <div class="section"><label>9. 누적 ODO(km)</label><input type="number" id="totalOdo" class="text-input" oninput="saveInput(this, 'report')"></div>
             <div class="section"><label>10. 소프트 테이크오버</label><div id="softContainer"></div><div style="text-align:right; font-weight:bold; color:#1a73e8; margin-top:8px; font-size:15px;">소프트 합계: <span id="softTotalDisp">0</span></div></div>
-            <div class="section"><label>11. 하드 테이크오버</label><div class="hard-table-wrapper"><table class="hard-table"><thead><tr><th style="width:24%">구분</th><th>브레이크</th><th>핸들</th><th>엑셀</th><th>시스템</th></tr></thead><tbody id="hardBody"></tbody></table></div><div style="text-align:right; font-weight:bold; color:#1a73e8; margin-top:10px; font-size:15px;">하드 합계: <span id="hardTotalDisp">0</span></div></div>
+            <div class="section"><label>11. 하드 테이크오버</label><div id="hardContainer"></div><div style="text-align:right; font-weight:bold; color:#dc3545; margin-top:8px; font-size:15px;">하드 합계: <span id="hardTotalDisp">0</span></div></div>
         </div>
         
         <div class="section"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;"><label style="margin:0;">12. 이슈 사항</label></div><textarea id="workIssue" class="text-input" style="height:100px; resize:none;" oninput="saveInput(this, 'report')"></textarea></div>
@@ -455,7 +464,8 @@
                  'selectedUser','selectedType','selectedCar','selectedShift',
                  ...[2,2,1,3,4,6,2].flatMap((cnt,i)=>Array.from({length:cnt},(_,j)=>'sc'+i+'_'+j)),
                  ...[2,2,1,3,4,6,2].map((_,i)=>'softCheck'+i),
-                 ...Array.from({length:5},(_,i)=>Array.from({length:4},(_,j)=>`h${i}_${j}`)).flat()],
+                 ...[2,2,3,1].flatMap((cnt,i)=>Array.from({length:cnt},(_,j)=>'hc'+i+'_'+j)),
+                  ...[2,2,3,1].map((_,i)=>'hardCheck'+i)],
         charge: ['chargeAmount','chargeTime','chargeMemo','chargeDate','selectedChargeCar'],
         check:  ['checkMemo','checkDate','selectedCheckCar',
                  ...["내외관 파손/청결","타이어 상태/압력","등화장치 작동","브레이크 성능","엔진/소모품류","내부 장비 상태"].map(k=>'check_'+k)]
@@ -471,17 +481,16 @@
     let checkResults = {};
 
     const softCategories=[
-        {name:"운전자판단", subs:["정보수집","의도된 수동개입"]},
         {name:"시스템이상", subs:["시스템 동작이상","시스템 에러"]},
-        {name:"교통약자보호", subs:["교통약자 보호구역"]},
-        {name:"신호위반", subs:["신호위반","유턴 신호위반","황색신호 통과"]},
-        {name:"신호지시", subs:["비보호 신호","신호등 미운영","점멸 신호등","중앙선 실선 통과"]},
-        {name:"도로상황", subs:["공사구간 회피","교통 수신호 지시","사고차량","급정지/서행/일시정지","꼬리물기","차선변경/끼어들기"]},
-        {name:"보호의무", subs:["긴급자동차 양보","보행자 보호"]}
+        {name:"신호/지시", subs:["신호위반","신호등 미인식","황색신호 통과"]},
+        {name:"도로상황", subs:["중앙선 실선 침범","급정지/급감속","꼬리물기","차선변경/끼어들기"]}
     ];
-    const hardCauses=["시스템이상","신호위반","교차로딜레마","도로상황","운전자실수"];
-    const hardActions=["브레이크","핸들","엑셀","시스템"];
-    const actionMap={"브레이크":"B","핸들":"H","엑셀":"A","시스템":"S"};
+    const hardCategories=[
+        {name:"시스템이상", subs:["시스템 동작이상","시스템 에러"]},
+        {name:"신호/지시", subs:["신호위반","황색신호 통과"]},
+        {name:"도로상황", subs:["중앙선 실선 침범","급정지/급감속","충돌/추돌 위험"]},
+        {name:"제어 에러", subs:["운전자 실수"]}
+    ];
 
     window.onload = function(){
         initUI();
@@ -504,12 +513,14 @@
                 if(e) localStorage.setItem('report_sc'+i+'_'+j, e.value);
             });
         });
-        for(let i=0; i<hardCauses.length; i++) {
-            for(let j=0; j<hardActions.length; j++) {
-                const e = document.getElementById(`h${i}_${j}`);
-                if(e) localStorage.setItem(`report_h${i}_${j}`, e.value);
-            }
-        }
+        hardCategories.forEach((cat,i)=>{
+            const checkEl = document.getElementById('hardCheck'+i);
+            if(checkEl) localStorage.setItem('report_hardCheck'+i, checkEl.checked ? '1' : '0');
+            cat.subs.forEach((sub,j)=>{
+                const e = document.getElementById('hc'+i+'_'+j);
+                if(e) localStorage.setItem('report_hc'+i+'_'+j, e.value);
+            });
+        });
         if(selectedUser)       localStorage.setItem('report_selectedUser', selectedUser);
         if(selectedType)       localStorage.setItem('report_selectedType', selectedType);
         if(selectedCar)        localStorage.setItem('report_selectedCar', selectedCar);
@@ -569,16 +580,22 @@
             });
         }
         
-        const hb=document.getElementById('hardBody');
-        if(hb) { 
-            hb.innerHTML = ""; 
-            hardCauses.forEach((c,i)=>{ 
-                let row=`<tr><td class="hard-cause-label">${c}</td>`; 
-                hardActions.forEach((a,j)=>{ 
-                    row+=`<td class="hard-clickable" onclick="openHardModal('${i}_${j}','${c}','${a}')"><div class="hard-cell-content"><input id="h${i}_${j}" class="hard-val-input" value="0" readonly></div></td>`; 
-                }); 
-                hb.innerHTML+=row+`</tr>`; 
-            }); 
+        const hc=document.getElementById('hardContainer');
+        if(hc) {
+            hc.innerHTML = "";
+            hardCategories.forEach((cat,i)=>{
+                let subHtml = "";
+                cat.subs.forEach((sub,j)=>{
+                    subHtml += `<div class="hard-sub-item"><span class="hard-sub-name">${sub}</span><div class="hard-counter-group"><button class="hard-counter-btn" onclick="stepHard(${i},${j},-1)">-</button><input id="hc${i}_${j}" class="hard-counter-val" value="0" readonly><button class="hard-counter-btn" onclick="stepHard(${i},${j},1)">+</button></div></div>`;
+                });
+                hc.innerHTML += `<div class="hard-cat-block">
+                    <div class="hard-cat-header">
+                        <span class="hard-cat-name" onclick="toggleHardCheckbox(${i})">${i+1}. ${cat.name}</span>
+                        <input type="checkbox" id="hardCheck${i}" class="hard-cat-checkbox" onchange="toggleHardCategory(${i}, this.checked)">
+                    </div>
+                    <div class="hard-sub-list" id="hardSubList${i}">${subHtml}</div>
+                </div>`;
+            });
         }
         
         const today = new Date().toISOString().substring(0, 10);
@@ -619,12 +636,20 @@
                 if(cb) { cb.checked = true; toggleSoftCategory(i, true); }
             }
         });
-        for(let i=0; i<hardCauses.length; i++) {
-            for(let j=0; j<hardActions.length; j++) {
-                const val = localStorage.getItem(`report_h${i}_${j}`);
-                if(val) document.getElementById(`h${i}_${j}`).value = val;
+        hardCategories.forEach((cat,i)=>{
+            cat.subs.forEach((sub,j)=>{
+                const val = localStorage.getItem('report_hc'+i+'_'+j);
+                if(val) {
+                    const el = document.getElementById('hc'+i+'_'+j);
+                    if(el) el.value = val;
+                }
+            });
+            const checkedVal = localStorage.getItem('report_hardCheck'+i);
+            if(checkedVal === '1') {
+                const cb = document.getElementById('hardCheck'+i);
+                if(cb) { cb.checked = true; toggleHardCategory(i, true); }
             }
-        }
+        });
         updateTotals();
         ['ssdVersion','autoDist','autoTime','totalOdo'].forEach(id => {
             const el = document.getElementById(id);
@@ -726,7 +751,13 @@
             const list = document.getElementById('softSubList'+i);
             if(list) list.classList.remove('expanded');
         });
-        for(let i=0; i<hardCauses.length; i++) { for(let j=0; j<hardActions.length; j++) { const e=document.getElementById(`h${i}_${j}`); if(e) e.value=0; } }
+        hardCategories.forEach((cat,i)=>{
+            cat.subs.forEach((sub,j)=>{ const e=document.getElementById('hc'+i+'_'+j); if(e) e.value=0; });
+            const cb = document.getElementById('hardCheck'+i);
+            if(cb) cb.checked=false;
+            const list = document.getElementById('hardSubList'+i);
+            if(list) list.classList.remove('expanded');
+        });
         updateTotals();
         const carArea = document.getElementById('carBtnGroup');
         const autoSec = document.getElementById('autoDriveSections');
@@ -870,7 +901,18 @@
             if(list) list.classList.remove('expanded');
             localStorage.removeItem('report_softCheck'+i);
         });
-        for(let i=0; i<hardCauses.length; i++){ for(let j=0; j<hardActions.length; j++){ const e = document.getElementById(`h${i}_${j}`); if(e) e.value = 0; localStorage.removeItem(`report_h${i}_${j}`); } }
+        hardCategories.forEach((cat,i)=>{
+            cat.subs.forEach((sub,j)=>{
+                const e = document.getElementById('hc'+i+'_'+j);
+                if(e) e.value = 0;
+                localStorage.removeItem('report_hc'+i+'_'+j);
+            });
+            const cb = document.getElementById('hardCheck'+i);
+            if(cb) cb.checked = false;
+            const list = document.getElementById('hardSubList'+i);
+            if(list) list.classList.remove('expanded');
+            localStorage.removeItem('report_hardCheck'+i);
+        });
         updateTotals();
     }
 
@@ -892,7 +934,8 @@
         let st=0;
         softCategories.forEach((cat,i)=>{ cat.subs.forEach((sub,j)=>{ st+=parseInt(document.getElementById('sc'+i+'_'+j).value||0); }); });
         document.getElementById('softTotalDisp').innerText=st;
-        let ht=0; for(let i=0;i<hardCauses.length;i++){ for(let j=0;j<hardActions.length;j++) ht+=parseInt(document.getElementById(`h${i}_${j}`).value||0); }
+        let ht=0;
+        hardCategories.forEach((cat,i)=>{ cat.subs.forEach((sub,j)=>{ ht+=parseInt(document.getElementById('hc'+i+'_'+j).value||0); }); });
         document.getElementById('hardTotalDisp').innerText=ht;
     }
 
@@ -913,16 +956,26 @@
         cb.checked = !cb.checked;
         toggleSoftCategory(i, cb.checked);
     }
-    
-    function stepHard(id,v){
-        const e=document.getElementById('h'+id); e.value=Math.max(0,parseInt(e.value)+v);
-        localStorage.setItem('report_h'+id, e.value); updateTotals();
+
+    function stepHard(i,j,v){
+        const e=document.getElementById('hc'+i+'_'+j);
+        e.value=Math.max(0,parseInt(e.value||0)+v);
+        localStorage.setItem('report_hc'+i+'_'+j, e.value);
+        updateTotals();
     }
 
-    let currentHardId=''; let currentHardValue=0;
-    function openHardModal(id,cause,action){currentHardId=id;const input=document.getElementById('h'+id);currentHardValue=parseInt(input.value||0);document.getElementById('hardModalTitle').innerText=`${cause} - ${action}`;document.getElementById('hardModalValue').innerText=currentHardValue;document.getElementById('hardTakeoverModal').style.display='flex';}
-    function changeHardModal(step){currentHardValue=Math.max(0,currentHardValue+step);document.getElementById('hardModalValue').innerText=currentHardValue;}
-    function closeHardModal(){const input=document.getElementById('h'+currentHardId);input.value=currentHardValue;localStorage.setItem('report_h'+currentHardId,currentHardValue);updateTotals();document.getElementById('hardTakeoverModal').style.display='none';}
+    function toggleHardCategory(i, checked){
+        const list = document.getElementById('hardSubList'+i);
+        if(list) list.classList.toggle('expanded', checked);
+        localStorage.setItem('report_hardCheck'+i, checked ? '1' : '0');
+    }
+
+    function toggleHardCheckbox(i){
+        const cb = document.getElementById('hardCheck'+i);
+        if(!cb) return;
+        cb.checked = !cb.checked;
+        toggleHardCategory(i, cb.checked);
+    }
 
     function toggleMenu() { const m = document.getElementById('sideMenu'); const o = document.getElementById('menuOverlay'); const a = m.classList.contains('active'); m.classList.toggle('active'); o.style.display = a ? 'none' : 'block'; }
 
@@ -1075,7 +1128,7 @@
                 "이슈사항":document.getElementById('workIssue').value
             };
             softCategories.forEach((cat,i)=>{ cat.subs.forEach((sub,j)=>{ payload[`소프트(${cat.name}-${sub})`]=document.getElementById('sc'+i+'_'+j).value; }); });
-            hardCauses.forEach((c,i)=>{ hardActions.forEach((a,j)=>payload[`하드(${c}-${actionMap[a]})`]=document.getElementById(`h${i}_${j}`).value); });
+            hardCategories.forEach((cat,i)=>{ cat.subs.forEach((sub,j)=>{ payload[`하드(${cat.name}-${sub})`]=document.getElementById('hc'+i+'_'+j).value; }); });
             fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload)})
                 .then(() => {
                     clearFormData('report');
@@ -1455,115 +1508,6 @@
         closeAutoDistCalculator();
     }
 
-    // ================================================================
-    // [카메라 OCR 자동 입력] 7.자율거리 / 8.자율시간
-    // ================================================================
-    let ocrTargetFieldId = null;
-
-    function triggerCamera(fieldId) {
-        ocrTargetFieldId = fieldId;
-        document.getElementById('ocrCameraInput').click();
-    }
-
-    function showOCRLoading(show, text) {
-        const overlay = document.getElementById('ocrLoadingOverlay');
-        if (text) document.getElementById('ocrStatusText').innerText = text;
-        overlay.style.display = show ? 'flex' : 'none';
-    }
-
-    async function handleOCRCapture(event) {
-        const file = event.target.files && event.target.files[0];
-        event.target.value = ''; // 같은 사진 재선택 가능하도록 초기화
-        const fieldId = ocrTargetFieldId;
-        if (!file || !fieldId) return;
-
-        showOCRLoading(true, '사진을 분석하고 있습니다...');
-        try {
-            if (typeof Tesseract === 'undefined') {
-                throw new Error('OCR 라이브러리 로드 실패');
-            }
-            const processedImage = await preprocessImageForOCR(file);
-            const result = await Tesseract.recognize(processedImage, 'eng', {
-                tessedit_char_whitelist: '0123456789.:',
-            });
-            const recognizedText = result.data.text || '';
-            const value = extractOCRValue(recognizedText, fieldId);
-
-            if (value === null) {
-                showModal('⚠️ 인식 실패', '숫자를 정확히 인식하지 못했습니다.\n계기판/화면이 잘 보이도록 가까이서 다시 촬영해주세요.', 'alert');
-            } else {
-                const input = document.getElementById(fieldId);
-                input.value = value;
-                saveInput(input, 'report');
-                if (fieldId === 'autoTime') validateAutoTimeFormat(input);
-                showModal('✅ 자동 인식 완료', `인식된 값: ${value}\n\n오차가 없는지 값을 한 번 더 확인해주세요.`, 'alert');
-            }
-        } catch (err) {
-            console.error('OCR error:', err);
-            showModal('⚠️ 인식 오류', '사진 분석 중 문제가 발생했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.', 'alert');
-        } finally {
-            showOCRLoading(false);
-            ocrTargetFieldId = null;
-        }
-    }
-
-    // 인식률을 높이기 위해 흑백 + 대비 강화 + 확대 처리
-    function preprocessImageForOCR(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const scale = 2; // 확대하여 작은 숫자 인식률 향상
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const d = imgData.data;
-                    for (let i = 0; i < d.length; i += 4) {
-                        const avg = (d[i] + d[i + 1] + d[i + 2]) / 3;
-                        const bw = avg > 150 ? 255 : 0; // 이진화(흑백 대비)
-                        d[i] = d[i + 1] = d[i + 2] = bw;
-                    }
-                    ctx.putImageData(imgData, 0, 0);
-                    resolve(canvas.toDataURL('image/png'));
-                };
-                img.onerror = () => reject(new Error('이미지 로드 실패'));
-                img.src = e.target.result;
-            };
-            reader.onerror = () => reject(new Error('파일 읽기 실패'));
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // 인식된 텍스트에서 필드 형식에 맞는 숫자만 추출
-    function extractOCRValue(text, fieldId) {
-        if (fieldId === 'autoDist') {
-            // 소수점 포함 숫자 (예: 23.8, 123.4)
-            const match = text.match(/\d+\.\d+|\d+/);
-            return match ? match[0] : null;
-        }
-        if (fieldId === 'autoTime') {
-            // "01:02:03" 또는 "01.02.03" 형태 우선 인식
-            const timeMatch = text.match(/(\d{1,2})\s*[:.]\s*(\d{1,2})\s*[:.]\s*(\d{1,2})/);
-            if (timeMatch) {
-                const [, h, m, s] = timeMatch;
-                return h.padStart(2, '0') + m.padStart(2, '0') + s.padStart(2, '0');
-            }
-            // 구분자 없이 6자리 숫자가 붙어있는 경우
-            const digitsOnly = text.replace(/[^\d]/g, '');
-            if (digitsOnly.length >= 6) return digitsOnly.slice(0, 6);
-            return null;
-        }
-        return null;
-    }
 </script>
-
-<div id="hardTakeoverModal" class="modal" style="display:none;">
-<div class="modal-content"><div class="modal-body"><h3 id="hardModalTitle" style="text-align:center"></h3><div style="display:flex;justify-content:center;align-items:center;gap:24px"><button class="circle-btn" onclick="changeHardModal(-1)">-</button><div id="hardModalValue" style="font-size:36px;font-weight:bold">0</div><button class="circle-btn" onclick="changeHardModal(1)">+</button></div></div><div class="modal-footer"><button class="modal-btn" onclick="closeHardModal()">확인</button></div></div></div>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </body>
 </html>
